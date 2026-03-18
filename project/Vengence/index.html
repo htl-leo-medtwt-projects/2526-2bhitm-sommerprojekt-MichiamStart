@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirit</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #wrapper {
+            width: 300vw;
+            height: 300vh;
+            position: relative;
+            transform: translate(-100vw, -100vh);
+            transition: transform 0.6s ease;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .center {
+            top: 100vh;
+            left: 100vw;
+            background-image: url(main/game/assets/mainBackground.png);
+            background-size: 100% 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            color: white;
+        }
+
+        #main {
+            top: 100vh;
+            left: 0;
+            background: #222;
+            color: white;
+        }
+
+        #options {
+            top: 200vh;
+            left: 100vw;
+            background: #333;
+            color: white;
+        }
+
+        #saves {
+            top: 0vh;
+            left: 100vw;
+            background: #444;
+            color: white;
+        }
+
+        #credits {
+            top: 0;
+            left: 100vw;
+            background: #555;
+            color: white;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrapper">
+        <div class="screen center" id="start">
+            <h1>Vengeful Spirit</h1>
+            <button onclick="move('left')">Start Game</button>
+            <button onclick="move('top')">Credits</button>
+            <button onclick="move('right')">Saves</button>
+            <button onclick="move('bottom')">Options</button>
+        </div>
+
+        <div class="screen top" id="main">
+            <h1>Start</h1>
+            <button onclick="move('center')">Back</button>
+        </div>
+
+        <div class="screen left" id="credits">
+            <h1>Credits</h1>
+            <button onclick="move('center')">Back</button>
+        </div>
+
+        <div class="screen right" id="options">
+            <h1>Options</h1>
+            <button onclick="move('center')">Back</button>
+        </div>
+
+        <div class="screen bottom" id="saves">
+            <h1>Saves</h1>
+            <button onclick="move('center')">Back</button>
+        </div>
+    </div>
+</body>
+<script>
+    let x = 1;
+    let y = 1;
+
+    function move(direction) {
+        if (direction === "center") {
+            x = 1;
+            y = 1;
+        }
+        if (direction === "left") x = 0;
+        if (direction === "right") x = 2;
+        if (direction === "bottom") y = 2;
+        if (direction === "top") y = 0;
+
+        update();
+    }
+
+    function update() {
+        const wrapper = document.getElementById("wrapper");
+        wrapper.style.transform = `translate(-${x * 100}vw, -${y * 100}vh)`;
+    }
+</script>
+
+</html>
