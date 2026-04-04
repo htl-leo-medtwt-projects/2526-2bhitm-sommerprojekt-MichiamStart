@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spirit</title>
     <style>
+        @font-face {
+            font-family: "title";
+            src: url("main/game/assets/fonts/Jim_Nightshade/JimNightshade-Regular.ttf") format("truetype");
+        }
+
         body {
             margin: 0;
             overflow: hidden;
@@ -23,17 +28,16 @@
             width: 100vw;
             height: 100vh;
             position: absolute;
-
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        .center {
+        #start {
             top: 100vh;
             left: 100vw;
-            background-image: url(main/game/assets/mainBackground.png);
+            background-image: url(main/game/assets/backgrounds/mainBackground.png);
             background-size: 100% 100%;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
@@ -55,8 +59,8 @@
         }
 
         #saves {
-            top: 0vh;
-            left: 100vw;
+            top: 100vh;
+            left: 200vw;
             background: #444;
             color: white;
         }
@@ -69,65 +73,115 @@
         }
 
         button {
-            margin: 10px;
+            background-color: #006BC2;
+            border: none;
+            border-radius: 14px;
+            font-size: 20px;
+            width: 14em;
+            height: 2.4em;
             padding: 10px 20px;
             cursor: pointer;
+        }
+
+        #b1 {
+            width: 10em;
+        }
+
+        #b2 {
+            width: 13em;
+        }
+
+        #b3 {
+            width: 16em;
+        }
+
+        #b4 {
+            width: 18em;
+        }
+
+        #title {
+            font-family: title;
+            font-size: 120px;
+            margin-left: 13%;
+        }
+
+        #titleDiv {
+            width: 100%;
+            display: flex;
+            justify-content: left;
+        }
+
+        nav {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+            justify-content: end;
+            padding-right: 30%;
+            padding-bottom: 12%;
+            gap: 2.5em;
         }
     </style>
 </head>
 
 <body>
     <div id="wrapper">
-        <div class="screen center" id="start">
-            <h1>Vengeful Spirit</h1>
-            <button onclick="move('left')">Start Game</button>
-            <button onclick="move('top')">Credits</button>
-            <button onclick="move('right')">Saves</button>
-            <button onclick="move('bottom')">Options</button>
+
+        <div class="screen" id="start">
+            <div id="titleDiv">
+                <h1 id="title">Spirit Vengence</h1>
+            </div>
+            <nav>
+                <button id="b1" onclick="goTo('main')">New Game</button>
+                <button id="b2" onclick="goTo('options')">Options</button>
+                <button id="b3" onclick="goTo('credits')">Credits</button>
+                <button id="b4" onclick="goTo('saves')">Import/Export Saves</button>
+            </nav>
         </div>
 
-        <div class="screen top" id="main">
+        <div class="screen" id="main">
             <h1>Start</h1>
-            <button onclick="move('center')">Back</button>
+            <button onclick="goTo('start')">Back</button>
         </div>
 
-        <div class="screen left" id="credits">
+        <div class="screen" id="credits">
             <h1>Credits</h1>
-            <button onclick="move('center')">Back</button>
+            <button onclick="goTo('start')">Back</button>
         </div>
 
-        <div class="screen right" id="options">
+        <div class="screen" id="options">
             <h1>Options</h1>
-            <button onclick="move('center')">Back</button>
+            <button onclick="goTo('start')">Back</button>
         </div>
 
-        <div class="screen bottom" id="saves">
+        <div class="screen" id="saves">
             <h1>Saves</h1>
-            <button onclick="move('center')">Back</button>
+            <button onclick="goTo('start')">Back</button>
         </div>
+
     </div>
-</body>
-<script>
-    let x = 1;
-    let y = 1;
 
-    function move(direction) {
-        if (direction === "center") {
-            x = 1;
-            y = 1;
-        }
-        if (direction === "left") x = 0;
-        if (direction === "right") x = 2;
-        if (direction === "bottom") y = 2;
-        if (direction === "top") y = 0;
+    <script>
+        const screens = {
+            start: { x: 1, y: 1 },
+            main: { x: 0, y: 1 },
+            credits: { x: 1, y: 0 },
+            options: { x: 1, y: 2 },
+            saves: { x: 2, y: 1 }
+        };
 
-        update();
-    }
-
-    function update() {
         const wrapper = document.getElementById("wrapper");
-        wrapper.style.transform = `translate(-${x * 100}vw, -${y * 100}vh)`;
-    }
-</script>
+
+        function goTo(name) {
+            const screen = screens[name];
+
+            const x = screen.x * 100;
+            const y = screen.y * 100;
+
+            wrapper.style.transform = `translate(-${x}vw, -${y}vh)`;
+        }
+    </script>
+</body>
 
 </html>
