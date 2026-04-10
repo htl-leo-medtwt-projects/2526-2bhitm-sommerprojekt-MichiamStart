@@ -52,24 +52,40 @@
         }
 
         #options {
+            background-image: url("main/game/assets/backgrounds/optionsBackground.jpg");
+            background-size: 100% 100%;
             top: 200vh;
             left: 100vw;
-            background: #333;
             color: white;
         }
 
         #saves {
+            background-image: url("main/game/assets/backgrounds/exportSaveBackground.png");
+            background-size: 100% 100%;
             top: 100vh;
             left: 200vw;
-            background: #444;
             color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
         }
 
         #credits {
+            background-size: 100% 100%;
+            background-position: center;
             top: 0;
             left: 100vw;
-            background: #555;
             color: white;
+        }
+
+        #credits video {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            z-index: -1;
+            object-fit: cover;
+            top: 0;
+            right: 0;
         }
 
         button {
@@ -122,6 +138,95 @@
             padding-bottom: 12%;
             gap: 2.5em;
         }
+
+        .optionsContainer {
+            background-image: url("main/game/assets/backgrounds/optionsSiteBackground.jpg");
+            background-size: 170% 100%;
+            background-position: center;
+            padding: 30px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .optionsContainer button {
+            width: 100%;
+        }
+
+        .sliderRow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sliderRow .value {
+            width: 50px;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .sliderRow input[type="range"] {
+            flex: 1;
+        }
+
+        input[type="range"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #006BC2;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -142,47 +247,99 @@
 
         <div class="screen" id="main">
             <h1>Start</h1>
-            
+
             <!--<button onclick="goTo('start')">Back</button> -->
         </div>
 
         <div class="screen" id="credits">
+            <video autoplay loop src="main/game/assets/backgrounds/CreditsBackgound.mp4"></video>
             <h1>Credits</h1>
+            <p>Michael Zeinhofer</p>
+            <p>Michael Zeinhofer</p>
+            <p>Michael Zeinhofer</p>
             <button onclick="goTo('start')">Back</button>
         </div>
 
         <div class="screen" id="options">
-            <h1>Options</h1>
-            <button onclick="goTo('start')">Back</button>
-        </div>
+            <div class="optionsContainer">
+                <h2>Settings</h2>
 
+                <div class="option">
+                    <label>Master Volume</label>
+                    <div class="sliderRow">
+                        <span class="value">80%</span>
+                        <input type="range" min="0" max="100" value="100">
+                    </div>
+                </div>
+
+                <div class="option">
+                    <label>Music Volume</label>
+                    <div class="sliderRow">
+                        <span class="value">80%</span>
+                        <input type="range" min="0" max="100" value="80">
+                    </div>
+                </div>
+
+                <div class="option">
+                    <label>Effects Volume</label>
+                    <div class="sliderRow">
+                        <span class="value">80%</span>
+                        <input type="range" min="0" max="100" value="60">
+                    </div>
+                </div>
+
+                <div class="option toggle">
+                    <label>VFX</label>
+                    <input type="checkbox" checked>
+                </div>
+
+                <div class="option toggle">
+                    <label>UI</label>
+                    <input type="checkbox" checked>
+                </div>
+                <button onclick="goTo('start')">Back</button>
+            </div>
+        </div>
         <div class="screen" id="saves">
-            <h1>Saves</h1>
-            <button onclick="goTo('start')">Back</button>
+            <h1>Copy to export:</h1>
+            <input type="text">
+            <h1>Paste to import</h1>
+            <input type="text">
+            <button style="margin-top: 2em;">Load</button>
+            <button style="margin-top: 2em;" onclick="goTo('start')">Back</button>
         </div>
-
-    </div>
-
-    <script>
-        const screens = {
-            start: { x: 1, y: 1 },
-            main: { x: 0, y: 1 },
-            credits: { x: 1, y: 0 },
-            options: { x: 1, y: 2 },
-            saves: { x: 2, y: 1 }
-        };
-
-        const wrapper = document.getElementById("wrapper");
-
-        function goTo(name) {
-            const screen = screens[name];
-
-            const x = screen.x * 100;
-            const y = screen.y * 100;
-
-            wrapper.style.transform = `translate(-${x}vw, -${y}vh)`;
-        }
-    </script>
 </body>
+<script>
+    const screens = {
+        start: { x: 1, y: 1 },
+        main: { x: 0, y: 1 },
+        credits: { x: 1, y: 0 },
+        options: { x: 1, y: 2 },
+        saves: { x: 2, y: 1 }
+    };
 
+    const wrapper = document.getElementById("wrapper");
+
+    function goTo(name) {
+        const screen = screens[name];
+
+        const x = screen.x * 100;
+        const y = screen.y * 100;
+
+        wrapper.style.transform = `translate(-${x}vw, -${y}vh)`;
+    }
+
+    const sliders = document.querySelectorAll('input[type="range"]');
+
+    for (let i = 0; i < sliders.length; i++) {
+        const slider = sliders[i];
+        const valueDisplay = slider.previousElementSibling;
+
+        valueDisplay.textContent = slider.value + "%";
+
+        slider.addEventListener("input", function () {
+            valueDisplay.textContent = slider.value + "%";
+        });
+    }
+</script>
 </html>
