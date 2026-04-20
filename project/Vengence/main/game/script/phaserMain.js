@@ -45,9 +45,8 @@ function create() {
   const ground = map.createLayer("Boden", tilesets, 0, 0);
   const deco = map.createLayer("Deko", tilesets, 0, 0);
   const walls = map.createLayer("Wände", tilesets, 0, 0);
-  const collosion = map.createLayer("Kollision", tilesets, 0, 0);
 
-  collosion.setCollisionByExclusion([-1]);
+  walls.setCollisionByExclusion([-1]);
 
   this.player = this.physics.add.sprite(400, 300, "player");
   this.player.setScale(0.25);
