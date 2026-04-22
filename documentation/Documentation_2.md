@@ -16,7 +16,7 @@ Progress:
 
 Ziele bis zum nächsten mal:
 
-- Sound Design
+- Basic Sound Design
 
 - Caracter Rotation
 
