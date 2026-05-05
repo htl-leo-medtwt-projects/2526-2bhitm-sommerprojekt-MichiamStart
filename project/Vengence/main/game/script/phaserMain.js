@@ -90,9 +90,9 @@ function create() {
 
   this.walkSound = this.sound.add("walk", { loop: true, volume: 0 });
 
-this.input.once("pointerdown", () => {
-  this.walkSound.play();
-});
+  this.input.once("pointerdown", () => {
+    this.walkSound.play();
+  });
 }
 
 function update() {
@@ -150,23 +150,23 @@ function update() {
 
   let targetVolume;
 
-if (moving) {
-  targetVolume = 0.4;
-} else {
-  targetVolume = 0.1;
-}
-
-if (walkVolume < targetVolume) {
-  walkVolume += 0.02;
-  if (walkVolume > targetVolume) {
-    walkVolume = targetVolume;
+  if (moving) {
+    targetVolume = 0.4;
+  } else {
+    targetVolume = 0.1;
   }
-} else if (walkVolume > targetVolume) {
-  walkVolume -= 0.02;
+
   if (walkVolume < targetVolume) {
-    walkVolume = targetVolume;
+    walkVolume += 0.02;
+    if (walkVolume > targetVolume) {
+      walkVolume = targetVolume;
+    }
+  } else if (walkVolume > targetVolume) {
+    walkVolume -= 0.02;
+    if (walkVolume < targetVolume) {
+      walkVolume = targetVolume;
+    }
   }
-}
 
-this.walkSound.setVolume(walkVolume);
+  this.walkSound.setVolume(walkVolume);
 }
