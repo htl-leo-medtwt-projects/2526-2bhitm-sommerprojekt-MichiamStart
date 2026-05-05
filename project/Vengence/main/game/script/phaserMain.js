@@ -13,27 +13,35 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+let lastDir = "S";
+let lastDiagDir = null;
+let diagReleasedAt = null;
+const DIAGONAL_RELEASE_DELAY = 150;
+
 function preload() {
-  this.load.spritesheet("player", "assets/sprites/player/Enemy-Melee-Idle-S.png", {
-    frameWidth: 256,
-    frameHeight: 256
-  });
+  this.load.spritesheet("idle-S", "assets/sprites/player/Enemy-Melee-Idle-S.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-N", "assets/sprites/player/Enemy-Melee-Idle-N.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-E", "assets/sprites/player/Enemy-Melee-Idle-E.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-W", "assets/sprites/player/Enemy-Melee-Idle-W.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-NE", "assets/sprites/player/Enemy-Melee-Idle-NE.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-NW", "assets/sprites/player/Enemy-Melee-Idle-NW.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-SE", "assets/sprites/player/Enemy-Melee-Idle-SE.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Idle-SW.png", { frameWidth: 256, frameHeight: 256 });
+
   this.load.image("DungeonTiles", "assets/worldData/dungeon/Dungeon_Tiles.png");
   this.load.image("DungeonTile", "assets/worldData/dungeon/Dungeon_Tile.png");
   this.load.tilemapTiledJSON("map", "assets/worldData/dungeon/dungeon.tmj");
 }
 
 function create() {
-
-  this.anims.create({
-    key: "idle",
-    frames: this.anims.generateFrameNumbers("player", {
-      start: 0,
-      end: 12
-    }),
-    frameRate: 6,
-    repeat: -1
-  });
+  this.anims.create({ key: "idle-S", frames: this.anims.generateFrameNumbers("idle-S", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-N", frames: this.anims.generateFrameNumbers("idle-N", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-E", frames: this.anims.generateFrameNumbers("idle-E", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-W", frames: this.anims.generateFrameNumbers("idle-W", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-NE", frames: this.anims.generateFrameNumbers("idle-NE", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-NW", frames: this.anims.generateFrameNumbers("idle-NW", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-SE", frames: this.anims.generateFrameNumbers("idle-SE", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
+  this.anims.create({ key: "idle-SW", frames: this.anims.generateFrameNumbers("idle-SW", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
 
   const map = this.make.tilemap({ key: "map" });
 
@@ -42,16 +50,17 @@ function create() {
     map.addTilesetImage("Dungeon_Tile", "DungeonTile")
   ];
 
-  const ground = map.createLayer("Boden", tilesets, 0, 0);
-  const deco = map.createLayer("Deko", tilesets, 0, 0);
+  map.createLayer("Boden", tilesets, 0, 0);
+  map.createLayer("Deko", tilesets, 0, 0);
   const walls = map.createLayer("Wände", tilesets, 0, 0);
 
   walls.setCollisionByExclusion([-1]);
 
-  this.player = this.physics.add.sprite(400, 300, "player");
+  this.player = this.physics.add.sprite(400, 300, "idle-S");
   this.player.setScale(0.25);
   this.player.body.setSize(this.player.width * 0.4, this.player.height * 0.6);
-  this.player.play("idle");
+  this.player.play("idle-S");
+
   this.physics.add.collider(this.player, walls);
   this.player.setDrag(1000);
 
@@ -62,44 +71,55 @@ function create() {
   this.cursors = this.input.keyboard.createCursorKeys();
 }
 
-let prePressed = "left";
-
 function update() {
   const speed = 80;
-  if (prePressed === "left") {
-    if (this.cursors.right.isDown) { this.player.setVelocityX(speed); } else
-      if (this.cursors.left.isDown) { this.player.setVelocityX(-speed); }
-    if (this.cursors.up.isDown) { this.player.setVelocityY(-speed); }
-    if (this.cursors.down.isDown) { this.player.setVelocityY(speed); }
+  const now = this.time.now;
+
+  let vx = 0;
+  let vy = 0;
+
+  if (this.cursors.left.isDown) vx = -speed;
+  if (this.cursors.right.isDown) vx = speed;
+  if (this.cursors.up.isDown) vy = -speed;
+  if (this.cursors.down.isDown) vy = speed;
+
+  this.player.setVelocity(vx, vy);
+
+  const moving = vx !== 0 || vy !== 0;
+  const isDiagonalInput = vx !== 0 && vy !== 0;
+
+  if (isDiagonalInput) {
+    if (vx > 0 && vy < 0) lastDir = "NE";
+    else if (vx < 0 && vy < 0) lastDir = "NW";
+    else if (vx > 0 && vy > 0) lastDir = "SE";
+    else if (vx < 0 && vy > 0) lastDir = "SW";
+    lastDiagDir = lastDir;
+    diagReleasedAt = null;
+  } else if (moving) {
+    if (lastDiagDir !== null && diagReleasedAt === null) {
+      diagReleasedAt = now;
+    }
+    if (diagReleasedAt === null || (now - diagReleasedAt) > DIAGONAL_RELEASE_DELAY) {
+      if (vx > 0) lastDir = "E";
+      else if (vx < 0) lastDir = "W";
+      else if (vy > 0) lastDir = "S";
+      else if (vy < 0) lastDir = "N";
+      lastDiagDir = null;
+      diagReleasedAt = null;
+    } else {
+      lastDir = lastDiagDir;
+    }
+  } else {
+    if (lastDiagDir !== null && diagReleasedAt === null) {
+      diagReleasedAt = now;
+    }
+    if (diagReleasedAt !== null && (now - diagReleasedAt) > DIAGONAL_RELEASE_DELAY) {
+      lastDiagDir = null;
+      diagReleasedAt = null;
+    } else if (lastDiagDir !== null) {
+      lastDir = lastDiagDir;
+    }
   }
-  if (prePressed === "right") {
-    if (this.cursors.left.isDown) { this.player.setVelocityX(-speed); } else
-      if (this.cursors.right.isDown) { this.player.setVelocityX(speed); }
-    if (this.cursors.up.isDown) { this.player.setVelocityY(-speed); }
-    if (this.cursors.down.isDown) { this.player.setVelocityY(speed); }
-  }
-  if (prePressed === "up") {
-    if (this.cursors.down.isDown) { this.player.setVelocityY(speed); } else
-      if (this.cursors.up.isDown) { this.player.setVelocityY(-speed); }
-    if (this.cursors.left.isDown) { this.player.setVelocityX(-speed); }
-    if (this.cursors.right.isDown) { this.player.setVelocityX(speed); }
-  }
-  if (prePressed === "down") {
-    if (this.cursors.up.isDown) { this.player.setVelocityY(-speed); } else
-      if (this.cursors.down.isDown) { this.player.setVelocityY(speed); }
-    if (this.cursors.left.isDown) { this.player.setVelocityX(-speed); }
-    if (this.cursors.right.isDown) { this.player.setVelocityX(speed); }
-  }
-  if (Phaser.Input.Keyboard.JustUp(this.cursors.left)) {
-    prePressed = "left";
-  }
-  if (Phaser.Input.Keyboard.JustUp(this.cursors.right)) {
-    prePressed = "right";
-  }
-  if (Phaser.Input.Keyboard.JustUp(this.cursors.up)) {
-    prePressed = "up";
-  }
-  if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-    prePressed = "down";
-  }
+
+  this.player.play("idle-" + lastDir, true);
 }
