@@ -21,6 +21,8 @@ const DIAGONAL_RELEASE_DELAY = 120;
 let lastHorizontal = null;
 let lastVertical = null;
 
+let walkVolume = 0;
+
 function preload() {
   this.load.spritesheet("idle-S", "assets/sprites/player/Enemy-Melee-Idle-S.png", { frameWidth: 256, frameHeight: 256 });
   this.load.spritesheet("idle-N", "assets/sprites/player/Enemy-Melee-Idle-N.png", { frameWidth: 256, frameHeight: 256 });
@@ -34,6 +36,8 @@ function preload() {
   this.load.image("DungeonTiles", "assets/worldData/dungeon/Dungeon_Tiles.png");
   this.load.image("DungeonTile", "assets/worldData/dungeon/Dungeon_Tile.png");
   this.load.tilemapTiledJSON("map", "assets/worldData/dungeon/dungeon.tmj");
+
+  this.load.audio("walk", "assets/sounds/effects/walkingWind.mp3");
 }
 
 function create() {
@@ -83,6 +87,12 @@ function create() {
   this.cursors.right.on("up", () => { if (lastHorizontal === "right") lastHorizontal = this.cursors.left.isDown ? "left" : null; });
   this.cursors.up.on("up", () => { if (lastVertical === "up") lastVertical = this.cursors.down.isDown ? "down" : null; });
   this.cursors.down.on("up", () => { if (lastVertical === "down") lastVertical = this.cursors.up.isDown ? "up" : null; });
+
+  this.walkSound = this.sound.add("walk", { loop: true, volume: 0 });
+
+this.input.once("pointerdown", () => {
+  this.walkSound.play();
+});
 }
 
 function update() {
@@ -137,4 +147,26 @@ function update() {
   }
 
   this.player.play("idle-" + lastDir, true);
+
+  let targetVolume;
+
+if (moving) {
+  targetVolume = 0.4;
+} else {
+  targetVolume = 0.1;
+}
+
+if (walkVolume < targetVolume) {
+  walkVolume += 0.02;
+  if (walkVolume > targetVolume) {
+    walkVolume = targetVolume;
+  }
+} else if (walkVolume > targetVolume) {
+  walkVolume -= 0.02;
+  if (walkVolume < targetVolume) {
+    walkVolume = targetVolume;
+  }
+}
+
+this.walkSound.setVolume(walkVolume);
 }
