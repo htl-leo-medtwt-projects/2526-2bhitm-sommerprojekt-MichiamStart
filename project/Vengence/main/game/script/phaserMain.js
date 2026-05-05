@@ -16,7 +16,10 @@ const game = new Phaser.Game(config);
 let lastDir = "S";
 let lastDiagDir = null;
 let diagReleasedAt = null;
-const DIAGONAL_RELEASE_DELAY = 150;
+const DIAGONAL_RELEASE_DELAY = 120;
+
+let lastHorizontal = null;
+let lastVertical = null;
 
 function preload() {
   this.load.spritesheet("idle-S", "assets/sprites/player/Enemy-Melee-Idle-S.png", { frameWidth: 256, frameHeight: 256 });
@@ -69,6 +72,16 @@ function create() {
   this.cameras.main.setZoom(2);
 
   this.cursors = this.input.keyboard.createCursorKeys();
+
+  this.cursors.left.on("down", () => { lastHorizontal = "left"; });
+  this.cursors.right.on("down", () => { lastHorizontal = "right"; });
+  this.cursors.up.on("down", () => { lastVertical = "up"; });
+  this.cursors.down.on("down", () => { lastVertical = "down"; });
+
+  this.cursors.left.on("up", () => { if (lastHorizontal === "left") lastHorizontal = this.cursors.right.isDown ? "right" : null; });
+  this.cursors.right.on("up", () => { if (lastHorizontal === "right") lastHorizontal = this.cursors.left.isDown ? "left" : null; });
+  this.cursors.up.on("up", () => { if (lastVertical === "up") lastVertical = this.cursors.down.isDown ? "down" : null; });
+  this.cursors.down.on("up", () => { if (lastVertical === "down") lastVertical = this.cursors.up.isDown ? "up" : null; });
 }
 
 function update() {
@@ -78,10 +91,11 @@ function update() {
   let vx = 0;
   let vy = 0;
 
-  if (this.cursors.left.isDown) vx = -speed;
-  if (this.cursors.right.isDown) vx = speed;
-  if (this.cursors.up.isDown) vy = -speed;
-  if (this.cursors.down.isDown) vy = speed;
+  if (lastHorizontal === "left") vx = -speed;
+  else if (lastHorizontal === "right") vx = speed;
+
+  if (lastVertical === "up") vy = -speed;
+  else if (lastVertical === "down") vy = speed;
 
   this.player.setVelocity(vx, vy);
 
@@ -89,8 +103,8 @@ function update() {
   const isDiagonalInput = vx !== 0 && vy !== 0;
 
   if (isDiagonalInput) {
-    if (vx > 0 && vy < 0) lastDir = "NE";
-    else if (vx < 0 && vy < 0) lastDir = "NW";
+    if (vx > 0 && vy < 0) lastDir = "NW";
+    else if (vx < 0 && vy < 0) lastDir = "NE";
     else if (vx > 0 && vy > 0) lastDir = "SE";
     else if (vx < 0 && vy > 0) lastDir = "SW";
     lastDiagDir = lastDir;
