@@ -60,8 +60,9 @@ function create() {
   walls.setCollisionByExclusion([-1]);
 
   this.player = this.physics.add.sprite(400, 300, "idle-S");
-  this.player.setScale(0.25);
-  this.player.body.setSize(this.player.width * 0.4, this.player.height * 0.6);
+  this.player.setScale(0.22);
+  this.player.body.setSize(this.player.width * 0.3, this.player.height * 0.05);
+  this.player.body.setOffset(this.player.width * 0.32, this.player.height * 0.7);
   this.player.play("idle-S");
 
   this.physics.add.collider(this.player, walls);
