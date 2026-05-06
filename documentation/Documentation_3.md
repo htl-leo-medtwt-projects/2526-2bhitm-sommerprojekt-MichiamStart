@@ -6,15 +6,15 @@ Progress:
 
 - Map rework
 
-- Player Model directional rotation
+- Player model directional rotation
 
 - Menü Hud Updates
 
 - Key Overroll Rework V2
 
-  - Zuletzt gedrückte Taste gewinnt
+  - Last Pressed Key wins
 
-- Sound design wind Sounds
+- Sound design wind sounds
 
 Goals until next time:
 
