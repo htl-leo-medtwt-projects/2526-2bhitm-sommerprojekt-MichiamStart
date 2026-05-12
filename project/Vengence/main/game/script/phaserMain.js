@@ -3,6 +3,7 @@ const config = {
   width: window.innerWidth,
   height: window.innerHeight,
   pixelArt: true,
+  parent: 'game',
   physics: { default: "arcade" },
   scene: { preload, create, update },
   scale: {
