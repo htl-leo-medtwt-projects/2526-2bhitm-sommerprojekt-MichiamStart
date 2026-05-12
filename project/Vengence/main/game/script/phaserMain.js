@@ -32,6 +32,8 @@ function preload() {
   this.load.spritesheet("idle-NW", "assets/sprites/player/Enemy-Melee-Idle-NW.png", { frameWidth: 256, frameHeight: 256 });
   this.load.spritesheet("idle-SE", "assets/sprites/player/Enemy-Melee-Idle-SE.png", { frameWidth: 256, frameHeight: 256 });
   this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Idle-SW.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Death.png", { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Idle-SW.png", { frameWidth: 256, frameHeight: 256 });
 
   this.load.image("DungeonTiles", "assets/worldData/dungeon/Dungeon_Tiles.png");
   this.load.image("DungeonTile", "assets/worldData/dungeon/Dungeon_Tile.png");
