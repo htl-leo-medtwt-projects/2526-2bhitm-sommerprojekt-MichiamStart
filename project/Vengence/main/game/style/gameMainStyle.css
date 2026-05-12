@@ -1,6 +1,115 @@
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     height: 100%;
     width: 100%;
+}
+
+#game {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#settings {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.optionsContainer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-image: url("main/game/assets/backgrounds/optionsSiteBackground.jpg");
+    background-size: 100% 100%;
+    background-position: center;
+    padding: 30px;
+    margin: auto;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.option {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.optionsContainer button {
+    width: 100%;
+}
+
+.sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sliderRow .value {
+    width: 50px;
+    text-align: right;
+    font-size: 14px;
+}
+
+.sliderRow input[type="range"] {
+    flex: 1;
+}
+
+input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #006BC2;
+    border-radius: 5px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
 }

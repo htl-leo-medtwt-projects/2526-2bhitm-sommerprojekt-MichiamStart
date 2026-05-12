@@ -13,6 +13,48 @@
 
 <body>
     <div id="game"></div>
+    <div id="settings">
+        <div class="optionsContainer">
+            <h2>Settings</h2>
+
+            <div class="option">
+                <label>Master Volume</label>
+                <div class="sliderRow">
+                    <span class="value">80%</span>
+                    <input type="range" min="0" max="100" value="100">
+                </div>
+            </div>
+
+            <div class="option">
+                <label>Music Volume</label>
+                <div class="sliderRow">
+                    <span class="value">80%</span>
+                    <input type="range" min="0" max="100" value="80">
+                </div>
+            </div>
+
+            <div class="option">
+                <label>Effects Volume</label>
+                <div class="sliderRow">
+                    <span class="value">80%</span>
+                    <input type="range" min="0" max="100" value="60">
+                </div>
+            </div>
+
+            <div class="option toggle">
+                <label>VFX</label>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="option toggle">
+                <label>UI</label>
+                <input type="checkbox" checked>
+            </div>
+            <button onclick="goTo('start')">Back</button>
+        </div>
+    </div>
+    </div>
+    <div id="skills"></div>
 </body>
 
 </html>
