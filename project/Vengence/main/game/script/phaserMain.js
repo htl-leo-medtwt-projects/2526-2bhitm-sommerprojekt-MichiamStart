@@ -41,6 +41,7 @@ function preload() {
   this.load.tilemapTiledJSON("map", "assets/worldData/dungeon/dungeon.tmj");
 
   this.load.audio("walk", "assets/sounds/effects/walkingWind.mp3");
+  this.load.json("quests", "assets/worldData/quests.json");
 }
 
 function create() {
@@ -96,6 +97,40 @@ function create() {
   this.input.once("pointerdown", () => {
     this.walkSound.play();
   });
+
+  this.quests = this.cache.json.get("quests");
+  this.questMarkers = this.add.group();
+  this.activeQuest = null;
+
+  this.quests.forEach(quest => {
+    if (!quest.completed) {
+      const marker = this.add.circle(quest.x, quest.y, 15, 0xffff00);
+      marker.setStrokeStyle(2, 0xff0000);
+      marker.questId = quest.id;
+      marker.questName = quest.name;
+      this.questMarkers.add(marker);
+    }
+  });
+
+  this.input.keyboard.on("keydown-SPACE", () => {
+    if (this.activeQuest) {
+      const questIndex = this.quests.findIndex(q => q.id === this.activeQuest);
+      if (questIndex !== -1) {
+        this.quests[questIndex].completed = true;
+        updateQuestsFile(this.quests);
+        const marker = this.questMarkers.getChildren().find(m => m.questId === this.activeQuest);
+        if (marker) {
+          marker.destroy();
+        }
+        this.activeQuest = null;
+      }
+    }
+  });
+
+  this.questArrow = this.add.triangle(window.innerWidth / 2, 30, 0, 0, -12, 25, 12, 25, 0xff00ff);
+  this.questArrow.setDepth(1000);
+  this.questArrow.setScrollFactor(0);
+  this.questArrow.setVisible(false);
 }
 
 function update() {
@@ -172,4 +207,41 @@ function update() {
   }
 
   this.walkSound.setVolume(walkVolume);
+
+  const proximityRange = 50;
+  let nearestMarker = null;
+  let nearestDistance = proximityRange;
+
+  //AI-Code to make quest marker visible for debugging
+
+  this.questMarkers.getChildren().forEach(marker => {
+    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
+    if (distance < proximityRange) {
+      marker.setStrokeStyle(3, 0x00ff00);
+      marker.setFillStyle(0xffff00);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestMarker = marker;
+      }
+    } else {
+      marker.setStrokeStyle(2, 0xff0000);
+      marker.setFillStyle(0xffff00);
+    }
+  });
+
+  this.activeQuest = nearestMarker ? nearestMarker.questId : null;
+}
+
+async function updateQuestsFile(quests) {
+  try {
+    const response = await fetch("assets/worldData/quests.json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quests)
+    });
+  } catch (error) {
+    console.log("Could not save quests:", error);
+  }
 }

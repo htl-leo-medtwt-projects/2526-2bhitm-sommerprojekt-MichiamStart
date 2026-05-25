@@ -7,7 +7,7 @@ body {
 }
 
 #game {
-    display: none;
+    display: flex;
     position: absolute;
     top: 0;
     right: 0;
@@ -16,7 +16,7 @@ body {
 #settings {
     height: 100%;
     width: 100%;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
 }
