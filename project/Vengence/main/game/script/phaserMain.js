@@ -55,14 +55,14 @@ function create() {
   this.anims.create({ key: "idle-SW", frames: this.anims.generateFrameNumbers("idle-SW", { start: 0, end: 12 }), frameRate: 6, repeat: -1 });
 
   const map = this.make.tilemap({ key: "map" });
-
+  console.log(map.tilesets);
   const tilesets = [
     map.addTilesetImage("Dungeon_Tiles", "DungeonTiles"),
     map.addTilesetImage("Dungeon_Tile", "DungeonTile")
   ];
 
   map.createLayer("Boden", tilesets, 0, 0);
-  map.createLayer("Deko", tilesets, 0, 0);
+  map.createLayer("BodenTop", tilesets, 0, 0);
   const walls = map.createLayer("Wände", tilesets, 0, 0);
 
   walls.setCollisionByExclusion([-1]);
