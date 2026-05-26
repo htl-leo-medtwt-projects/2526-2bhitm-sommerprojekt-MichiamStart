@@ -136,6 +136,16 @@ function create() {
   this.questArrow.setDepth(1000);
   this.questArrow.setScrollFactor(0);
   this.questArrow.setVisible(false);
+
+  //DEBUG
+  this.coordText = this.add.text(20, 20, "", {
+  fontSize: "16px",
+  fill: "#ffffff",
+  backgroundColor: "#000000"
+});
+
+this.coordText.setScrollFactor(0);
+this.coordText.setDepth(1001);
 }
 
 function update() {
@@ -217,8 +227,7 @@ function update() {
   let nearestMarker = null;
   let nearestDistance = proximityRange;
 
-  //AI-Code to make quest marker visible for debugging
-
+  //DEBUG
   this.questMarkers.getChildren().forEach(marker => {
     const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
     if (distance < proximityRange) {
@@ -235,6 +244,13 @@ function update() {
   });
 
   this.activeQuest = nearestMarker ? nearestMarker.questId : null;
+  
+  //DEBUG
+  this.coordText = this.add.text(20, 20, "DEBUG", {
+  fontSize: "16px",
+  color: "#ffffff",
+  backgroundColor: "#000000"
+}).setScrollFactor(0).setDepth(9999);
 }
 
 async function updateQuestsFile(quests) {
@@ -249,4 +265,6 @@ async function updateQuestsFile(quests) {
   } catch (error) {
     console.log("Could not save quests:", error);
   }
+  
+
 }
