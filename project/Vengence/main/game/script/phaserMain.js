@@ -61,8 +61,8 @@ function create() {
     map.addTilesetImage("Dungeon_Tile", "DungeonTile")
   ];
 
-  map.createLayer("Boden", tilesets, 0, 0);
-  map.createLayer("BodenTop", tilesets, 0, 0);
+  const floor = map.createLayer("Boden", tilesets, 0, 0);
+  const floorTop = map.createLayer("BodenTop", tilesets, 0, 0);
   const walls = map.createLayer("Wände", tilesets, 0, 0);
 
   walls.setCollisionByExclusion([-1]);
@@ -76,6 +76,11 @@ function create() {
   this.physics.add.collider(this.player, walls);
   this.player.setDrag(1000);
 
+  floor.setDepth(0);
+  walls.setDepth(1);
+  this.player.setDepth(2);
+  floorTop.setDepth(4);
+  
   this.cameras.main.startFollow(this.player);
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
   this.cameras.main.setZoom(2);
