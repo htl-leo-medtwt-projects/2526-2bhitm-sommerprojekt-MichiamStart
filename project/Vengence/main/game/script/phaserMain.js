@@ -12,6 +12,10 @@ const config = {
   }
 };
 
+document.addEventListener("click", () => {
+  document.getElementById("backgroundMusic").play()
+});
+
 const game = new Phaser.Game(config);
 
 let lastDir = "S";
