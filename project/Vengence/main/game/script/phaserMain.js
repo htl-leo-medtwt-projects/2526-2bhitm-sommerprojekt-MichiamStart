@@ -71,7 +71,7 @@ function create() {
 
   walls.setCollisionByExclusion([-1]);
 
-  this.player = this.physics.add.sprite(400, 300, "idle-S");
+  this.player = this.physics.add.sprite(640, 1100, "idle-S");
   this.player.setScale(0.22);
   this.player.body.setSize(this.player.width * 0.3, this.player.height * 0.05);
   this.player.body.setOffset(this.player.width * 0.32, this.player.height * 0.7);
@@ -248,13 +248,6 @@ function update() {
   });
 
   this.activeQuest = nearestMarker ? nearestMarker.questId : null;
-  
-  //DEBUG
-  this.coordText = this.add.text(20, 20, "DEBUG", {
-  fontSize: "16px",
-  color: "#ffffff",
-  backgroundColor: "#000000"
-}).setScrollFactor(0).setDepth(9999);
 }
 
 async function updateQuestsFile(quests) {
