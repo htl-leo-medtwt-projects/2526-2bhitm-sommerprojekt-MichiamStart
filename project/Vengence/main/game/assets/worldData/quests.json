@@ -3,16 +3,16 @@
     "id": "quest_1",
     "name": "First Quest",
     "type": "Reach",
-    "x": 400,
-    "y": 300,
+    "x": 430,
+    "y": 560,
     "completed": false
   },
   {
     "id": "quest_2",
     "name": "Second Quest",
     "type": "Reach",
-    "x": 800,
-    "y": 500,
+    "x": 960,
+    "y": 470,
     "completed": false
   }
 ]
