@@ -6,6 +6,19 @@ body {
     width: 100%;
 }
 
+#coordinateDisplay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 14px;
+    border-radius: 6px;
+    z-index: 1000;
+}
+
 #game {
     display: flex;
     position: absolute;

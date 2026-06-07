@@ -1,0 +1,43 @@
+{
+    "enemies": [
+        {
+            "id": "basic-1",
+            "type": "basic",
+            "x": 480,
+            "y": 650,
+            "speed": 30,
+            "moveTilesMin": 3,
+            "moveTilesMax": 6,
+            "idleSecondsMin": 3,
+            "idleSecondsMax": 30,
+            "detectionRadius": 3,
+            "chaseRadius": 7
+        },
+        {
+            "id": "strong-1",
+            "type": "strong",
+            "x": 640,
+            "y": 800,
+            "speed": 40,
+            "moveTilesMin": 3,
+            "moveTilesMax": 6,
+            "idleSecondsMin": 3,
+            "idleSecondsMax": 30,
+            "detectionRadius": 4.5,
+            "chaseRadius": 10.5
+        },
+        {
+            "id": "basic-2",
+            "type": "basic",
+            "x": 1420,
+            "y": 440,
+            "speed": 30,
+            "moveTilesMin": 3,
+            "moveTilesMax": 6,
+            "idleSecondsMin": 3,
+            "idleSecondsMax": 30,
+            "detectionRadius": 3,
+            "chaseRadius": 7
+        }
+    ]
+}
