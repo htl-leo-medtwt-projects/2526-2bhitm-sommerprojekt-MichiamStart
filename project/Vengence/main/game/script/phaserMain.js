@@ -46,6 +46,7 @@ function preload() {
 
   this.load.audio("walk", "assets/sounds/effects/walkingWind.mp3");
   this.load.json("quests", "assets/worldData/quests.json");
+  this.load.json("enemyData", "assets/worldData/dungeon/enemies.json");
 }
 
 function create() {
@@ -79,6 +80,70 @@ function create() {
 
   this.physics.add.collider(this.player, walls);
   this.player.setDrag(1000);
+
+  this.playerStart = { x: 640, y: 1100 };
+  this.enemyData = this.cache.json.get("enemyData");
+  this.enemies = [];
+  this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+  const walkableGrid = buildWalkableGrid(map, walls);
+  this.map = map;
+  this.walkableGrid = walkableGrid;
+  const tileToWorld = (tileX, tileY) => ({ x: tileX * map.tileWidth + map.tileWidth / 2, y: tileY * map.tileHeight + map.tileHeight / 2 });
+
+  if (this.enemyData?.enemies) {
+    this.enemyData.enemies.forEach((enemyConfig, index) => {
+      const worldX = Number(enemyConfig.x);
+      const worldY = Number(enemyConfig.y);
+      if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) {
+        return;
+      }
+
+      const spawnTile = worldToTile(worldX, worldY, map.tileWidth, map.tileHeight);
+      const safeTile = getNearestWalkableTile(walkableGrid, spawnTile.x, spawnTile.y);
+      const safeWorld = tileToWorld(safeTile.x, safeTile.y, map.tileWidth, map.tileHeight);
+      const spawnPosition = { x: safeWorld.x, y: safeWorld.y };
+
+      const type = enemyConfig.type || "basic";
+      const detectionRadiusTiles = Number(enemyConfig.detectionRadius) || (type === "strong" ? 4.5 : 3);
+      const chaseRadiusTiles = Number(enemyConfig.chaseRadius) || (type === "strong" ? 10.5 : 7);
+      const placeholderRadius = Number(enemyConfig.placeholderRadius) || (type === "strong" ? 16 : 12);
+      const color = type === "strong" ? 0xcc0000 : 0xff4444;
+
+      const enemyCircle = this.add.circle(spawnPosition.x, spawnPosition.y, placeholderRadius, color, 1);
+      this.physics.add.existing(enemyCircle);
+      enemyCircle.body.setCircle(placeholderRadius);
+      enemyCircle.body.setBounce(0.2);
+      enemyCircle.body.setDrag(1000);
+      enemyCircle.body.setAllowGravity(false);
+      enemyCircle.setDepth(2);
+
+      const enemy = {
+        id: enemyConfig.id || `enemy-${index + 1}`,
+        type,
+        circle: enemyCircle,
+        speed: Number(enemyConfig.speed) || (type === "strong" ? 80 : 70),
+        detectionRadiusTiles,
+        chaseRadiusTiles,
+        detectionRadiusPx: detectionRadiusTiles * map.tileWidth,
+        chaseRadiusPx: chaseRadiusTiles * map.tileWidth,
+        moveTilesMin: Number(enemyConfig.moveTilesMin) || 3,
+        moveTilesMax: Number(enemyConfig.moveTilesMax) || 6,
+        idleSecondsMin: Number(enemyConfig.idleSecondsMin) || 3,
+        idleSecondsMax: Number(enemyConfig.idleSecondsMax) || 30,
+        state: "idle",
+        path: [],
+        pathIndex: 0,
+        nextStateAt: this.time.now + Phaser.Math.Between(3000, 30000),
+        dangerStart: null,
+        hasTriggeredDeath: false,
+        debugDanger: this.add.circle(spawnPosition.x, spawnPosition.y, detectionRadiusTiles * map.tileWidth, 0xff0000, 0.08).setVisible(false).setDepth(1),
+        debugChase: this.add.circle(spawnPosition.x, spawnPosition.y, chaseRadiusTiles * map.tileWidth, 0xff00ff, 0.05).setVisible(false).setDepth(1)
+      };
+
+      this.enemies.push(enemy);
+      this.physics.add.collider(enemyCircle, walls);
+    });
+  }
 
   floor.setDepth(0);
   walls.setDepth(1);
@@ -141,15 +206,8 @@ function create() {
   this.questArrow.setScrollFactor(0);
   this.questArrow.setVisible(false);
 
-  //DEBUG
-  this.coordText = this.add.text(20, 20, "", {
-  fontSize: "16px",
-  fill: "#ffffff",
-  backgroundColor: "#000000"
-});
-
-this.coordText.setScrollFactor(0);
-this.coordText.setDepth(1001);
+  // Coordinate display overlay
+  this.coordElement = document.getElementById("coordinateDisplay");
 }
 
 function update() {
@@ -226,6 +284,11 @@ function update() {
   }
 
   this.walkSound.setVolume(walkVolume);
+  if (this.coordElement) {
+    const playerCenter = this.player.body ? this.player.body.center : this.player;
+    this.coordElement.textContent = `${Math.round(playerCenter.x)}, ${Math.round(playerCenter.y)}`;
+  }
+  updateEnemies(this);
 
   const proximityRange = 50;
   let nearestMarker = null;
@@ -265,3 +328,4 @@ async function updateQuestsFile(quests) {
   
 
 }
+
