@@ -24,8 +24,6 @@ Progress:
 
 Goals until next time:
 
-- Background music design
-
 - Local storage and export for current position and the current quest completion status
 
 - Quest menu for selecting quests + quest selection logic
