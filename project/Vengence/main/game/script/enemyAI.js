@@ -158,6 +158,10 @@ function onPlayerDeath(scene) {
     updateQuestsFile(scene.quests);
   }
 
+  if (typeof resetEnemies === "function") {
+    resetEnemies(scene);
+  }
+
   if (scene.questMarkers) {
     scene.questMarkers.clear(true, true);
   } else {
@@ -187,6 +191,16 @@ function onPlayerDeath(scene) {
     }
   }
 
+  const attackSound = document.getElementById("attackSound");
+  if (attackSound) {
+    attackSound.currentTime = 0;
+    attackSound.play().catch(() => {});
+  }
+
+  if (typeof clearLocalSaveState === "function") {
+    clearLocalSaveState();
+  }
+
   if (scene.gameOverOverlay && !scene.gameOverActive) {
     scene.gameOverActive = true;
     scene.gameOverOverlay.setVisible(true);
@@ -210,6 +224,9 @@ function onPlayerDeath(scene) {
         onComplete: () => {
           scene.gameOverOverlay.setVisible(false);
           scene.gameOverActive = false;
+          if (scene.scene && typeof scene.scene.restart === "function") {
+            scene.scene.restart();
+          }
         }
       });
     });
@@ -227,8 +244,15 @@ function updateEnemies(scene) {
   const player = scene.player;
   const playerTile = worldToTile(player.x, player.y, tileWidth, tileHeight);
 
-  scene.enemies.forEach(enemy => {
-    const circle = enemy.circle;
+  let playerDied = false;
+
+  for (let i = 0; i < scene.enemies.length; i++) {
+    const enemy = scene.enemies[i];
+    const circle = enemy?.circle;
+    if (!circle || !circle.body) {
+      continue;
+    }
+
     const enemyTile = worldToTile(circle.x, circle.y, tileWidth, tileHeight);
     enemy.debugDanger.setPosition(circle.x, circle.y);
     enemy.debugChase.setPosition(circle.x, circle.y);
@@ -244,6 +268,8 @@ function updateEnemies(scene) {
       } else if (!enemy.attackDeathTriggered && now - enemy.attackStart >= 1000) {
         enemy.attackDeathTriggered = true;
         onPlayerDeath(scene);
+        playerDied = true;
+        break;
       }
     } else {
       enemy.attackStart = null;
@@ -307,5 +333,9 @@ function updateEnemies(scene) {
         circle.body.setVelocity(0, 0);
       }
     }
-  });
+  }
+
+  if (playerDied) {
+    return;
+  }
 }

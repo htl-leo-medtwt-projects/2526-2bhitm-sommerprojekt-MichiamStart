@@ -14,5 +14,68 @@
     "x": 960,
     "y": 470,
     "completed": false
+  },
+  {
+    "id": "debug-quest-1",
+    "name": "Debug Quest 1",
+    "x": 638,
+    "y": 1000,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-2",
+    "name": "Debug Quest 2",
+    "x": 171,
+    "y": 274,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-3",
+    "name": "Debug Quest 3",
+    "x": 91,
+    "y": 423,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-4",
+    "name": "Debug Quest 4",
+    "x": 200,
+    "y": 627,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-5",
+    "name": "Debug Quest 5",
+    "x": 1039,
+    "y": 1184,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-6",
+    "name": "Debug Quest 6",
+    "x": 1087,
+    "y": 1174,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-7",
+    "name": "Debug Quest 7",
+    "x": 764,
+    "y": 241,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-1",
+    "name": "Debug Quest 1",
+    "x": 450,
+    "y": 113,
+    "completed": false
+  },
+  {
+    "id": "debug-quest-1",
+    "name": "Debug Quest 1",
+    "x": 446,
+    "y": 135,
+    "completed": false
   }
 ]

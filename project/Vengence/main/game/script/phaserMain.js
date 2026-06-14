@@ -17,6 +17,22 @@ document.addEventListener("click", () => {
 });
 
 const game = new Phaser.Game(config);
+window.game = game;
+window.restartGame = function() {
+  if (typeof clearLocalSaveState === "function") {
+    clearLocalSaveState();
+  }
+
+  if (!window.game || !window.game.scene) {
+    return;
+  }
+
+  const activeScenes = window.game.scene.getScenes(true);
+  const sceneToRestart = activeScenes.length ? activeScenes[0] : window.game.scene.getScenes(false)[0];
+  if (sceneToRestart && sceneToRestart.scene && typeof sceneToRestart.scene.restart === "function") {
+    sceneToRestart.scene.restart();
+  }
+};
 
 let lastDir = "S";
 let lastDiagDir = null;
@@ -71,6 +87,7 @@ function create() {
   const walls = map.createLayer("Wände", tilesets, 0, 0);
 
   walls.setCollisionByExclusion([-1]);
+  this.walls = walls;
 
   this.player = this.physics.add.sprite(640, 1100, "idle-S");
   this.player.setScale(0.22);
@@ -82,71 +99,34 @@ function create() {
   this.player.setDrag(1000);
 
   this.playerStart = { x: 640, y: 1100 };
-  this.enemyData = this.cache.json.get("enemyData");
+  this.enemyData = JSON.parse(JSON.stringify(this.cache.json.get("enemyData")));
   this.enemies = [];
   this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
   const walkableGrid = buildWalkableGrid(map, walls);
   this.map = map;
   this.walkableGrid = walkableGrid;
-  const tileToWorld = (tileX, tileY) => ({ x: tileX * map.tileWidth + map.tileWidth / 2, y: tileY * map.tileHeight + map.tileHeight / 2 });
+
+  const savedState = loadLocalSaveState();
+  if (savedState) {
+    if (savedState.removedEnemyIds && Array.isArray(savedState.removedEnemyIds) && this.enemyData?.enemies) {
+      this.enemyData.enemies.forEach(enemy => {
+        enemy.removed = savedState.removedEnemyIds.includes(enemy.id);
+      });
+    }
+    if (savedState.playerPosition && Number.isFinite(Number(savedState.playerPosition.x)) && Number.isFinite(Number(savedState.playerPosition.y))) {
+      this.playerStart = {
+        x: Number(savedState.playerPosition.x),
+        y: Number(savedState.playerPosition.y)
+      };
+      this.player.setPosition(this.playerStart.x, this.playerStart.y);
+      if (this.player.body) {
+        this.player.body.reset(this.playerStart.x, this.playerStart.y);
+      }
+    }
+  }
 
   if (this.enemyData?.enemies) {
-    this.enemyData.enemies.forEach((enemyConfig, index) => {
-      const worldX = Number(enemyConfig.x);
-      const worldY = Number(enemyConfig.y);
-      if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) {
-        return;
-      }
-
-      const spawnTile = worldToTile(worldX, worldY, map.tileWidth, map.tileHeight);
-      const safeTile = getNearestWalkableTile(walkableGrid, spawnTile.x, spawnTile.y);
-      const safeWorld = tileToWorld(safeTile.x, safeTile.y, map.tileWidth, map.tileHeight);
-      const spawnPosition = { x: safeWorld.x, y: safeWorld.y };
-
-      const type = enemyConfig.type || "basic";
-      const detectionRadiusTiles = Number(enemyConfig.detectionRadius) || (type === "strong" ? 4.5 : 3);
-      const chaseRadiusTiles = Number(enemyConfig.chaseRadius) || (type === "strong" ? 10.5 : 7);
-      const attackRadiusTiles = Number(enemyConfig.attackRadius) || (type === "strong" ? 3.5 : 2.5);
-      const placeholderRadius = Number(enemyConfig.placeholderRadius) || (type === "strong" ? 16 : 12);
-      const color = type === "strong" ? 0xcc0000 : 0xff4444;
-
-      const enemyCircle = this.add.circle(spawnPosition.x, spawnPosition.y, placeholderRadius, color, 1);
-      this.physics.add.existing(enemyCircle);
-      enemyCircle.body.setCircle(placeholderRadius);
-      enemyCircle.body.setBounce(0.2);
-      enemyCircle.body.setDrag(1000);
-      enemyCircle.body.setAllowGravity(false);
-      enemyCircle.setDepth(0.5);
-
-      const enemy = {
-        id: enemyConfig.id || `enemy-${index + 1}`,
-        type,
-        circle: enemyCircle,
-        speed: Number(enemyConfig.speed) || (type === "strong" ? 80 : 70),
-        detectionRadiusTiles,
-        chaseRadiusTiles,
-        attackRadiusTiles,
-        detectionRadiusPx: detectionRadiusTiles * map.tileWidth,
-        chaseRadiusPx: chaseRadiusTiles * map.tileWidth,
-        attackRadiusPx: attackRadiusTiles * map.tileWidth,
-        moveTilesMin: Number(enemyConfig.moveTilesMin) || 3,
-        moveTilesMax: Number(enemyConfig.moveTilesMax) || 6,
-        idleSecondsMin: Number(enemyConfig.idleSecondsMin) || 3,
-        idleSecondsMax: Number(enemyConfig.idleSecondsMax) || 30,
-        state: "idle",
-        path: [],
-        pathIndex: 0,
-        nextStateAt: this.time.now + Phaser.Math.Between(3000, 30000),
-        attackStart: null,
-        attackDeathTriggered: false,
-        debugDanger: this.add.circle(spawnPosition.x, spawnPosition.y, detectionRadiusTiles * map.tileWidth, 0xff0000, 0.08).setVisible(false).setDepth(0.5),
-        debugChase: this.add.circle(spawnPosition.x, spawnPosition.y, chaseRadiusTiles * map.tileWidth, 0x00ccff, 0.08).setVisible(true).setDepth(0.5),
-        debugAttack: this.add.circle(spawnPosition.x, spawnPosition.y, attackRadiusTiles * map.tileWidth, 0xffd300, 0.08).setVisible(true).setDepth(0.5)
-      };
-
-      this.enemies.push(enemy);
-      this.physics.add.collider(enemyCircle, walls);
-    });
+    loadEnemies(this);
   }
 
   floor.setDepth(0);
@@ -158,7 +138,12 @@ function create() {
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
   this.cameras.main.setZoom(2);
 
-  this.cursors = this.input.keyboard.createCursorKeys();
+  this.cursors = this.input.keyboard.addKeys({
+    up: Phaser.Input.Keyboard.KeyCodes.W,
+    down: Phaser.Input.Keyboard.KeyCodes.S,
+    left: Phaser.Input.Keyboard.KeyCodes.A,
+    right: Phaser.Input.Keyboard.KeyCodes.D
+  });
 
   this.cursors.left.on("down", () => { lastHorizontal = "left"; });
   this.cursors.right.on("down", () => { lastHorizontal = "right"; });
@@ -170,15 +155,28 @@ function create() {
   this.cursors.up.on("up", () => { if (lastVertical === "up") lastVertical = this.cursors.down.isDown ? "down" : null; });
   this.cursors.down.on("up", () => { if (lastVertical === "down") lastVertical = this.cursors.up.isDown ? "up" : null; });
 
+  if (typeof window.initializeDebugSpawner === "function") {
+    window.initializeDebugSpawner(this);
+  }
+
   this.walkSound = this.sound.add("walk", { loop: true, volume: 0 });
 
   this.input.once("pointerdown", () => {
     this.walkSound.play();
   });
 
-  this.quests = this.cache.json.get("quests");
+  this.quests = JSON.parse(JSON.stringify(this.cache.json.get("quests")));
   this.questMarkers = this.add.group();
   this.activeQuest = null;
+
+  if (savedState && Array.isArray(savedState.completedQuestIds)) {
+    const completedQuestIds = new Set(savedState.completedQuestIds);
+    this.quests.forEach(quest => {
+      if (completedQuestIds.has(quest.id)) {
+        quest.completed = true;
+      }
+    });
+  }
 
   this.quests.forEach(quest => {
     if (!quest.completed) {
@@ -190,7 +188,18 @@ function create() {
     }
   });
 
-  this.abilityCooldown = 20000;
+  // Track the game start time for finish timer
+  this.gameStartTime = this.time.now;
+  this.finishActive = false;
+
+  this.saveStateEvent = this.time.addEvent({
+    delay: 5000,
+    loop: true,
+    callback: saveLocalState,
+    callbackScope: this
+  });
+
+  this.abilityCooldown = 7000;
   this.abilityCooldownEnd = 0;
   const abilityBoxWidth = 150;
   const abilityBoxHeight = 90;
@@ -224,6 +233,7 @@ function create() {
       if (questIndex !== -1) {
         this.quests[questIndex].completed = true;
         updateQuestsFile(this.quests);
+        saveLocalState(this);
         const marker = this.questMarkers.getChildren().find(m => m.questId === this.activeQuest);
         if (marker) {
           marker.destroy();
@@ -263,6 +273,13 @@ function create() {
               this.player.body.reset(targetX, targetY);
               this.player.body.setVelocity(0, 0);
             }
+            if (closestEnemy) {
+              const attackSound = document.getElementById("attackSound");
+              if (attackSound) {
+                attackSound.currentTime = 0;
+                attackSound.play().catch(() => {});
+              }
+            }
             if (this.enemyData && Array.isArray(this.enemyData.enemies)) {
               const eIndex = this.enemyData.enemies.findIndex(e => e.id === closestEnemy.id);
               if (eIndex !== -1) {
@@ -270,6 +287,7 @@ function create() {
                 if (typeof updateEnemiesFile === 'function') {
                   updateEnemiesFile(this.enemyData.enemies);
                 }
+                saveLocalState(this);
               }
             }
           }
@@ -288,9 +306,9 @@ function create() {
   const overlayWidth = this.scale.width;
   const overlayHeight = this.scale.height;
   const overlayBackground = this.add.rectangle(0, 0, overlayWidth, overlayHeight, 0x000000, 0.85).setOrigin(0);
-  const overlayText = this.add.text(overlayWidth / 2, overlayHeight / 2, "GAME OVER", {
+  const overlayText = this.add.text(overlayWidth / 2, overlayHeight / 2, "GAME OVER. Restarting...", {
     fontFamily: "Arial",
-    fontSize: "72px",
+    fontSize: "38px",
     color: "#ffffff",
     fontStyle: "bold",
     align: "center",
@@ -305,7 +323,44 @@ function create() {
   this.gameOverOverlay.setVisible(false);
   this.gameOverActive = false;
 
-  // Coordinate display overlay
+  const finishBg = this.add.rectangle(0, 0, overlayWidth, overlayHeight, 0x000000, 0.85).setOrigin(0);
+  const finishTitle = this.add.text(overlayWidth / 2, overlayHeight / 2 - 60, "YOU FINISHED", {
+    fontFamily: "Arial",
+    fontSize: "48px",
+    color: "#ffffff",
+    fontStyle: "bold",
+    align: "center",
+    stroke: "#000000",
+    strokeThickness: 8
+  }).setOrigin(0.5);
+
+  const finishTimeText = this.add.text(overlayWidth / 2, overlayHeight / 2, "Time: 00:00", {
+    fontFamily: "Arial",
+    fontSize: "32px",
+    color: "#ffffff",
+    align: "center",
+    stroke: "#000000",
+    strokeThickness: 6
+  }).setOrigin(0.5);
+
+  const btnW = 240;
+  const btnH = 60;
+  const btnX = overlayWidth / 2 - btnW / 2;
+  const btnY = overlayHeight / 2 + 80;
+  const resetRect = this.add.rectangle(btnX + btnW / 2, btnY + btnH / 2, btnW, btnH, 0x00aa00, 1).setOrigin(0.5);
+  const resetText = this.add.text(overlayWidth / 2, btnY + btnH / 2, "YOU MOVED ON!!!", { fontFamily: "Arial", fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
+  resetRect.setInteractive({ useHandCursor: true });
+  resetRect.on('pointerdown', () => {
+    clearLocalSaveState();
+    this.scene.restart();
+  });
+
+  this.finishOverlay = this.add.container(0, 0, [finishBg, finishTitle, finishTimeText, resetRect, resetText]);
+  this.finishOverlay.setScrollFactor(0);
+  this.finishOverlay.setDepth(10001);
+  this.finishOverlay.setVisible(false);
+  this.finishTimeText = finishTimeText;
+
   this.coordElement = document.getElementById("coordinateDisplay");
 }
 
@@ -313,10 +368,17 @@ function update() {
   const speed = 80;
   const now = this.time.now;
 
+  // Fallback: Start game music if any key is pressed and music hasn't started yet
+  if (typeof window.gameMusicStarted === 'function' && !window.gameMusicStarted()) {
+    if (typeof window.startGameMusic === 'function') {
+      window.startGameMusic();
+    }
+  }
+
   let vx = 0;
   let vy = 0;
 
-  if (this.gameOverActive) {
+  if (this.gameOverActive || this.finishActive) {
     lastHorizontal = null;
     lastVertical = null;
     this.player.setVelocity(0, 0);
@@ -429,6 +491,188 @@ function update() {
   });
 
   this.activeQuest = nearestMarker ? nearestMarker.questId : null;
+
+  // Check finish condition: all quests completed
+  if (!this.finishActive && this.quests && this.quests.length > 0) {
+    const allDone = this.quests.every(q => q.completed === true);
+    if (allDone) {
+      this.finishActive = true;
+      // compute elapsed time
+      const elapsedMs = now - (this.gameStartTime || now);
+      const totalSeconds = Math.floor(elapsedMs / 1000);
+      const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const secs = (totalSeconds % 60).toString().padStart(2, '0');
+      if (this.finishTimeText) this.finishTimeText.setText(`Time: ${mins}:${secs}`);
+      if (this.finishOverlay) this.finishOverlay.setVisible(true);
+    }
+  }
+}
+
+function createEnemyFromConfig(scene, enemyConfig, index) {
+  if (!scene || !enemyConfig) {
+    return null;
+  }
+
+  const worldX = Number(enemyConfig.x);
+  const worldY = Number(enemyConfig.y);
+  if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) {
+    return null;
+  }
+
+  const spawnTile = worldToTile(worldX, worldY, scene.map.tileWidth, scene.map.tileHeight);
+  const safeTile = getNearestWalkableTile(scene.walkableGrid, spawnTile.x, spawnTile.y);
+  const safeWorld = tileToWorld(safeTile.x, safeTile.y, scene.map.tileWidth, scene.map.tileHeight);
+  const spawnPosition = { x: safeWorld.x, y: safeWorld.y };
+
+  const type = enemyConfig.type || "basic";
+  const detectionRadiusTiles = Number(enemyConfig.detectionRadius) || (type === "strong" ? 4.5 : 3);
+  const chaseRadiusTiles = Number(enemyConfig.chaseRadius) || (type === "strong" ? 10.5 : 7);
+  const attackRadiusTiles = Number(enemyConfig.attackRadius) || (type === "strong" ? 3.5 : 2.5);
+  const placeholderRadius = Number(enemyConfig.placeholderRadius) || (type === "strong" ? 16 : 12);
+  const color = type === "strong" ? 0xcc0000 : 0xff4444;
+
+  const enemyCircle = scene.add.circle(spawnPosition.x, spawnPosition.y, placeholderRadius, color, 1);
+  scene.physics.add.existing(enemyCircle);
+  enemyCircle.body.setCircle(placeholderRadius);
+  enemyCircle.body.setBounce(0.2);
+  enemyCircle.body.setDrag(1000);
+  enemyCircle.body.setAllowGravity(false);
+  enemyCircle.setDepth(0.5);
+
+  const enemy = {
+    id: enemyConfig.id || `enemy-${index + 1}`,
+    type,
+    circle: enemyCircle,
+    speed: Number(enemyConfig.speed) || (type === "strong" ? 80 : 70),
+    detectionRadiusTiles,
+    chaseRadiusTiles,
+    attackRadiusTiles,
+    detectionRadiusPx: detectionRadiusTiles * scene.map.tileWidth,
+    chaseRadiusPx: chaseRadiusTiles * scene.map.tileWidth,
+    attackRadiusPx: attackRadiusTiles * scene.map.tileWidth,
+    moveTilesMin: Number(enemyConfig.moveTilesMin) || 3,
+    moveTilesMax: Number(enemyConfig.moveTilesMax) || 6,
+    idleSecondsMin: Number(enemyConfig.idleSecondsMin) || 3,
+    idleSecondsMax: Number(enemyConfig.idleSecondsMax) || 30,
+    state: "idle",
+    path: [],
+    pathIndex: 0,
+    nextStateAt: scene.time.now + Phaser.Math.Between(3000, 30000),
+    attackStart: null,
+    attackDeathTriggered: false,
+    debugDanger: scene.add.circle(spawnPosition.x, spawnPosition.y, detectionRadiusTiles * scene.map.tileWidth, 0xff0000, 0.08).setVisible(false).setDepth(0.5),
+    debugChase: scene.add.circle(spawnPosition.x, spawnPosition.y, chaseRadiusTiles * scene.map.tileWidth, 0x00ccff, 0.08).setVisible(true).setDepth(0.5),
+    debugAttack: scene.add.circle(spawnPosition.x, spawnPosition.y, attackRadiusTiles * scene.map.tileWidth, 0xffd300, 0.08).setVisible(true).setDepth(0.5)
+  };
+
+  scene.physics.add.collider(enemyCircle, scene.walls);
+  return enemy;
+}
+
+function loadEnemies(scene) {
+  if (!scene) {
+    return;
+  }
+
+  scene.enemies = [];
+
+  if (scene.enemyData && Array.isArray(scene.enemyData.enemies)) {
+    scene.enemyData.enemies.forEach((enemyConfig, index) => {
+      if (enemyConfig.removed) {
+        return;
+      }
+      const enemy = createEnemyFromConfig(scene, enemyConfig, index);
+      if (enemy) {
+        scene.enemies.push(enemy);
+      }
+    });
+  }
+}
+
+function saveLocalState(scene) {
+  if (!scene) {
+    return;
+  }
+
+  const completedQuestIds = Array.isArray(scene.quests)
+    ? scene.quests.filter(q => q.completed).map(q => q.id)
+    : [];
+
+  const removedEnemyIds = Array.isArray(scene.enemyData?.enemies)
+    ? scene.enemyData.enemies.filter(e => e.removed).map(e => e.id)
+    : [];
+
+  const playerPosition = scene.player ? {
+    x: Math.round(scene.player.x),
+    y: Math.round(scene.player.y)
+  } : { x: scene.playerStart?.x || 0, y: scene.playerStart?.y || 0 };
+
+  const state = {
+    completedQuestIds,
+    removedEnemyIds,
+    playerPosition
+  };
+
+  try {
+    localStorage.setItem("vengence-save-state", JSON.stringify(state));
+  } catch (error) {
+    console.warn("Could not save local state:", error);
+  }
+}
+
+function loadLocalSaveState() {
+  try {
+    const raw = localStorage.getItem("vengence-save-state");
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw);
+  } catch (error) {
+    console.warn("Could not load local state:", error);
+    return null;
+  }
+}
+
+function clearLocalSaveState() {
+  try {
+    localStorage.removeItem("vengence-save-state");
+  } catch (error) {
+    console.warn("Could not clear local state:", error);
+  }
+}
+
+function resetEnemies(scene) {
+  if (!scene) {
+    return;
+  }
+
+  if (scene.enemies?.length) {
+    scene.enemies.forEach(enemy => {
+      if (enemy.debugDanger) enemy.debugDanger.destroy();
+      if (enemy.debugChase) enemy.debugChase.destroy();
+      if (enemy.debugAttack) enemy.debugAttack.destroy();
+      if (enemy.circle) enemy.circle.destroy();
+    });
+  }
+
+  scene.enemies = [];
+
+  if (scene.enemyData && Array.isArray(scene.enemyData.enemies)) {
+    scene.enemyData.enemies.forEach(enemy => {
+      enemy.removed = false;
+    });
+
+    scene.enemyData.enemies.forEach((enemyConfig, index) => {
+      const enemy = createEnemyFromConfig(scene, enemyConfig, index);
+      if (enemy) {
+        scene.enemies.push(enemy);
+      }
+    });
+
+    if (typeof updateEnemiesFile === 'function') {
+      updateEnemiesFile(scene.enemyData.enemies);
+    }
+  }
 }
 
 async function updateQuestsFile(quests) {
@@ -459,4 +703,3 @@ async function updateEnemiesFile(enemies) {
     console.log("Could not save enemies:", error);
   }
 }
-

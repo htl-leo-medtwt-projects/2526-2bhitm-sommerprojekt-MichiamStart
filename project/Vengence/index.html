@@ -88,7 +88,6 @@
             cursor: pointer;
         }
 
-        /* Ability UI overlay */
         #ability-ui {
             position: fixed;
             right: 20px;
@@ -169,7 +168,13 @@
         }
         h2 {
             text-align: center;
-            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: white;
+            font-size: xx-large;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bolder;
         }
         .option {
             margin-bottom: 15px;
@@ -233,10 +238,15 @@
             border-radius: 50%;
             cursor: pointer;
         }
+        p{
+            text-align: center;
+            font-size: larger;
+        }
     </style>
 </head>
 
 <body>
+    <audio id="bgMusic" src="main/game/assets/sounds/music/dungeon-background.mp3" loop></audio>
     <div id="wrapper">
 
         <div class="screen" id="start">
@@ -247,24 +257,22 @@
                 <button id="b1" onclick="goTo('main')">New Game</button>
                 <button id="b2" onclick="goTo('options')">Options</button>
                 <button id="b3" onclick="goTo('credits')">Credits</button>
-                <button id="b4" onclick="goTo('saves')">Import/Export Saves</button>
+                <button id="b4" onclick="goTo('saves')">Explaination</button>
             </nav>
         </div>
         <div class="screen" id="main">
-            <h1>Start</h1>
             <div id="ability-ui">
                 <div id="ability-fill"></div>
                 <div id="ability-label">Attack</div>
             </div>
-            <a href="main/game/game.html">game here start</a>
-            <!--<button onclick="goTo('start')">Back</button> -->
+            <a href="main/game/game.html">START GAME</a>
         </div>
         <div class="screen" id="credits">
             <video autoplay loop src="main/game/assets/backgrounds/CreditsBackgound.mp4"></video>
             <h1>Credits</h1>
-            <p>Michael Zeinhofer</p>
-            <p>Michael Zeinhofer</p>
-            <p>Michael Zeinhofer</p>
+            <p>Main Dev: Michael Zeinhofer</p>
+            <p>Music and Sound Effects: Youtube</p>
+            <p>Images, Tilesets and Spritesheets: Itch.io</p>
             <button onclick="goTo('start')">Back</button>
         </div>
         <div class="screen" id="options">
@@ -273,42 +281,33 @@
                 <div class="option">
                     <label>Master Volume</label>
                     <div class="sliderRow">
-                        <span class="value">80%</span>
-                        <input type="range" min="0" max="100" value="100">
+                        <span class="value" id="master-value">80%</span>
+                        <input type="range" id="master-volume" min="0" max="100" value="80">
                     </div>
                 </div>
                 <div class="option">
                     <label>Music Volume</label>
                     <div class="sliderRow">
-                        <span class="value">80%</span>
-                        <input type="range" min="0" max="100" value="80">
+                        <span class="value" id="music-value">80%</span>
+                        <input type="range" id="music-volume" min="0" max="100" value="80">
                     </div>
                 </div>
                 <div class="option">
                     <label>Effects Volume</label>
                     <div class="sliderRow">
-                        <span class="value">80%</span>
-                        <input type="range" min="0" max="100" value="60">
+                        <span class="value" id="effects-value">60%</span>
+                        <input type="range" id="effects-volume" min="0" max="100" value="60">
                     </div>
-                </div>
-                <div class="option toggle">
-                    <label>VFX</label>
-                    <input type="checkbox" checked>
-                </div>
-                <div class="option toggle">
-                    <label>UI</label>
-                    <input type="checkbox" checked>
                 </div>
                 <button onclick="goTo('start')">Back</button>
             </div>
         </div>
         <div class="screen" id="saves">
-            <h1>Copy to export: </h1>
-            <input type="text">
-            <h1>Paste to import: </h1>
-            <input type="text">
-            <button style="margin-top: 2em;">Load</button>
-            <button style="margin-top: 2em;" onclick="goTo('start')">Back</button>
+            <h1>Story:</h1>
+            <p>You are in a top secret research facility where human experiments were made in order to create real psychic humans.<br> You are one of these research subjects.<br> You died and came back from the dead in order to take your revenge on the executives that run the shady bussiness that killed you</p>
+            <h1>Mechanics</h1>
+            <p>Around the facility, <span style="text-decoration: underline;">researchers</span> are present everywhere.<br> These researchers can <span style="text-decoration: underline;">exorcise</span> you if you give them enough time, so you need to strike first.<br> Use your powers to <span style="text-decoration: underline;">attack</span> them, but be weary about the <span style="text-decoration: underline;">cooldown</span> this attack has.<br> Your goal is to wipe out all the executives of the company spread around the laboratory. Once you have done that, you can finally <span style="text-decoration: underline;">move on</span></p>
+            <button onclick="goTo('start')">Back</button>
         </div>
 </body>
 <script>
@@ -336,6 +335,62 @@
         slider.addEventListener("input", function () {
             valueDisplay.textContent = slider.value + "%";
         });
+    }
+
+    const masterVolumeSlider = document.getElementById('master-volume');
+    const musicVolumeSlider = document.getElementById('music-volume');
+    const effectsVolumeSlider = document.getElementById('effects-volume');
+    const bgMusic = document.getElementById('bgMusic');
+
+    if (masterVolumeSlider && musicVolumeSlider && effectsVolumeSlider && bgMusic) {
+        const savedMasterVol = localStorage.getItem('masterVolume');
+        const savedMusicVol = localStorage.getItem('musicVolume');
+        const savedEffectsVol = localStorage.getItem('effectsVolume');
+
+        if (savedMasterVol) masterVolumeSlider.value = savedMasterVol;
+        if (savedMusicVol) musicVolumeSlider.value = savedMusicVol;
+        if (savedEffectsVol) effectsVolumeSlider.value = savedEffectsVol;
+
+        document.getElementById('master-value').textContent = masterVolumeSlider.value + '%';
+        document.getElementById('music-value').textContent = musicVolumeSlider.value + '%';
+        document.getElementById('effects-value').textContent = effectsVolumeSlider.value + '%';
+
+        function updateMusicVolume() {
+            const masterVol = masterVolumeSlider.value / 100;
+            const musicVol = musicVolumeSlider.value / 100;
+            bgMusic.volume = masterVol * musicVol;
+        }
+
+        let musicStarted = false;
+        function startMusic() {
+            if (!musicStarted) {
+                musicStarted = true;
+                bgMusic.play().catch(() => {});
+                document.removeEventListener('click', startMusic);
+                document.removeEventListener('keypress', startMusic);
+            }
+        }
+        document.addEventListener('click', startMusic);
+        document.addEventListener('keypress', startMusic);
+
+        masterVolumeSlider.addEventListener('input', function () {
+            localStorage.setItem('masterVolume', this.value);
+            document.getElementById('master-value').textContent = this.value + '%';
+            updateMusicVolume();
+        });
+
+        musicVolumeSlider.addEventListener('input', function () {
+            localStorage.setItem('musicVolume', this.value);
+            document.getElementById('music-value').textContent = this.value + '%';
+            updateMusicVolume();
+        });
+
+        effectsVolumeSlider.addEventListener('input', function () {
+            localStorage.setItem('effectsVolume', this.value);
+            document.getElementById('effects-value').textContent = this.value + '%';
+        });
+
+        updateMusicVolume();
     }
 </script>
 </html>

@@ -7,15 +7,52 @@
     <title>Game</title>
     <link type="icon" href="assets/sprites/placeholderPlayer.gif">
     <link rel="stylesheet" href="style/gameMainStyle.css">
+    <script>
+        function applyVolumeSettings() {
+            const masterVol = (localStorage.getItem('masterVolume') || 80) / 100;
+            const musicVol = (localStorage.getItem('musicVolume') || 80) / 100;
+            const effectsVol = (localStorage.getItem('effectsVolume') || 60) / 100;
+
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            const attackSound = document.getElementById('attackSound');
+
+            if (backgroundMusic) backgroundMusic.volume = masterVol * musicVol;
+            if (attackSound) attackSound.volume = masterVol * effectsVol;
+        }
+        let gameMusicStarted = false;
+        function startGameMusic() {
+            if (!gameMusicStarted) {
+                gameMusicStarted = true;
+                const backgroundMusic = document.getElementById('backgroundMusic');
+                if (backgroundMusic) {
+                    backgroundMusic.play().catch(() => {});
+                }
+                document.removeEventListener('click', startGameMusic);
+                document.removeEventListener('keydown', startGameMusic);
+            }
+        }
+        document.addEventListener('click', startGameMusic);
+        document.addEventListener('keydown', startGameMusic);
+        
+        window.startGameMusic = startGameMusic;
+        window.gameMusicStarted = () => gameMusicStarted;
+
+        window.addEventListener('storage', applyVolumeSettings);
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js" defer></script>
+    <script src="script/debug.js" defer></script>
     <script src="script/enemyAI.js" defer></script>
     <script src="script/phaserMain.js" defer></script>
 </head>
 
 <body>
-    <div id="coordinateDisplay">0, 0</div>
+    <button id="reset-button" type="button" onclick="restartGame()">Reset</button>
     <div id="game"></div>
+    <audio id="attackSound" src="assets/sounds/effects/slash.mp3" preload="auto"></audio>
     <audio id="backgroundMusic" src="assets/sounds/music/dungeon-background.mp3" loop></audio>
+    <script>
+        applyVolumeSettings();
+    </script>
     <div id="settings">
         <div class="optionsContainer">
             <h2>Settings</h2>
