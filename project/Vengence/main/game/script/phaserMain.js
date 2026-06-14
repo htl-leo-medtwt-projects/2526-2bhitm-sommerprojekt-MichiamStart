@@ -106,6 +106,7 @@ function create() {
       const type = enemyConfig.type || "basic";
       const detectionRadiusTiles = Number(enemyConfig.detectionRadius) || (type === "strong" ? 4.5 : 3);
       const chaseRadiusTiles = Number(enemyConfig.chaseRadius) || (type === "strong" ? 10.5 : 7);
+      const attackRadiusTiles = Number(enemyConfig.attackRadius) || (type === "strong" ? 3.5 : 2.5);
       const placeholderRadius = Number(enemyConfig.placeholderRadius) || (type === "strong" ? 16 : 12);
       const color = type === "strong" ? 0xcc0000 : 0xff4444;
 
@@ -115,7 +116,7 @@ function create() {
       enemyCircle.body.setBounce(0.2);
       enemyCircle.body.setDrag(1000);
       enemyCircle.body.setAllowGravity(false);
-      enemyCircle.setDepth(2);
+      enemyCircle.setDepth(0.5);
 
       const enemy = {
         id: enemyConfig.id || `enemy-${index + 1}`,
@@ -124,8 +125,10 @@ function create() {
         speed: Number(enemyConfig.speed) || (type === "strong" ? 80 : 70),
         detectionRadiusTiles,
         chaseRadiusTiles,
+        attackRadiusTiles,
         detectionRadiusPx: detectionRadiusTiles * map.tileWidth,
         chaseRadiusPx: chaseRadiusTiles * map.tileWidth,
+        attackRadiusPx: attackRadiusTiles * map.tileWidth,
         moveTilesMin: Number(enemyConfig.moveTilesMin) || 3,
         moveTilesMax: Number(enemyConfig.moveTilesMax) || 6,
         idleSecondsMin: Number(enemyConfig.idleSecondsMin) || 3,
@@ -134,10 +137,11 @@ function create() {
         path: [],
         pathIndex: 0,
         nextStateAt: this.time.now + Phaser.Math.Between(3000, 30000),
-        dangerStart: null,
-        hasTriggeredDeath: false,
-        debugDanger: this.add.circle(spawnPosition.x, spawnPosition.y, detectionRadiusTiles * map.tileWidth, 0xff0000, 0.08).setVisible(false).setDepth(1),
-        debugChase: this.add.circle(spawnPosition.x, spawnPosition.y, chaseRadiusTiles * map.tileWidth, 0xff00ff, 0.05).setVisible(false).setDepth(1)
+        attackStart: null,
+        attackDeathTriggered: false,
+        debugDanger: this.add.circle(spawnPosition.x, spawnPosition.y, detectionRadiusTiles * map.tileWidth, 0xff0000, 0.08).setVisible(false).setDepth(0.5),
+        debugChase: this.add.circle(spawnPosition.x, spawnPosition.y, chaseRadiusTiles * map.tileWidth, 0x00ccff, 0.08).setVisible(true).setDepth(0.5),
+        debugAttack: this.add.circle(spawnPosition.x, spawnPosition.y, attackRadiusTiles * map.tileWidth, 0xffd300, 0.08).setVisible(true).setDepth(0.5)
       };
 
       this.enemies.push(enemy);
@@ -186,6 +190,34 @@ function create() {
     }
   });
 
+  this.abilityCooldown = 20000;
+  this.abilityCooldownEnd = 0;
+  const abilityBoxWidth = 150;
+  const abilityBoxHeight = 90;
+  const abilityBoxX = this.scale.width - abilityBoxWidth - 20;
+  const abilityBoxY = this.scale.height - abilityBoxHeight - 20;
+  const abilityBackground = this.add.rectangle(abilityBoxX, abilityBoxY, abilityBoxWidth, abilityBoxHeight, 0x111111, 0.9).setOrigin(0);
+  const abilityFill = this.add.rectangle(abilityBoxX + 4, abilityBoxY + abilityBoxHeight - 4, abilityBoxWidth - 8, abilityBoxHeight - 8, 0x00cc00, 0.8).setOrigin(0, 1);
+  const abilityBorder = this.add.graphics();
+  abilityBorder.lineStyle(2, 0xffffff, 1);
+  abilityBorder.strokeRect(abilityBoxX, abilityBoxY, abilityBoxWidth, abilityBoxHeight);
+  const abilityLabel = this.add.text(abilityBoxX + abilityBoxWidth / 2, abilityBoxY + abilityBoxHeight / 2, "Attack", {
+    fontFamily: "Arial",
+    fontSize: "18px",
+    color: "#ffffff",
+    fontStyle: "bold",
+    align: "center"
+  }).setOrigin(0.5);
+  abilityBackground.setScrollFactor(0);
+  abilityBorder.setScrollFactor(0);
+  abilityFill.setScrollFactor(0);
+  abilityLabel.setScrollFactor(0);
+  abilityBackground.setDepth(9000);
+  abilityBorder.setDepth(9001);
+  abilityFill.setDepth(9002);
+  abilityLabel.setDepth(9003);
+  this.abilityUI = { fill: abilityFill, label: abilityLabel, boxX: abilityBoxX, boxY: abilityBoxY, boxWidth: abilityBoxWidth, boxHeight: abilityBoxHeight };
+
   this.input.keyboard.on("keydown-SPACE", () => {
     if (this.activeQuest) {
       const questIndex = this.quests.findIndex(q => q.id === this.activeQuest);
@@ -199,12 +231,79 @@ function create() {
         this.activeQuest = null;
       }
     }
+    const now = this.time.now;
+    if (now >= this.abilityCooldownEnd) {
+      let closestEnemy = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+      let closestIndex = -1;
+      this.enemies.forEach((enemy, index) => {
+        const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.circle.x, enemy.circle.y);
+        if (distance <= enemy.attackRadiusPx && distance < closestDistance) {
+          closestEnemy = enemy;
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+      if (closestEnemy) {
+        const targetX = closestEnemy.circle.x;
+        const targetY = closestEnemy.circle.y;
+        this.tweens.add({
+          targets: this.player,
+          x: targetX,
+          y: targetY,
+          duration: 50,
+          ease: 'Linear',
+          onComplete: () => {
+            if (closestEnemy.debugDanger) closestEnemy.debugDanger.destroy();
+            if (closestEnemy.debugChase) closestEnemy.debugChase.destroy();
+            if (closestEnemy.debugAttack) closestEnemy.debugAttack.destroy();
+            if (closestEnemy.circle) closestEnemy.circle.destroy();
+            this.enemies.splice(closestIndex, 1);
+            if (this.player.body) {
+              this.player.body.reset(targetX, targetY);
+              this.player.body.setVelocity(0, 0);
+            }
+            if (this.enemyData && Array.isArray(this.enemyData.enemies)) {
+              const eIndex = this.enemyData.enemies.findIndex(e => e.id === closestEnemy.id);
+              if (eIndex !== -1) {
+                this.enemyData.enemies[eIndex].removed = true;
+                if (typeof updateEnemiesFile === 'function') {
+                  updateEnemiesFile(this.enemyData.enemies);
+                }
+              }
+            }
+          }
+        });
+        this.abilityCooldownEnd = now + this.abilityCooldown;
+        return;
+      }
+    }
   });
 
   this.questArrow = this.add.triangle(window.innerWidth / 2, 30, 0, 0, -12, 25, 12, 25, 0xff00ff);
   this.questArrow.setDepth(1000);
   this.questArrow.setScrollFactor(0);
   this.questArrow.setVisible(false);
+
+  const overlayWidth = this.scale.width;
+  const overlayHeight = this.scale.height;
+  const overlayBackground = this.add.rectangle(0, 0, overlayWidth, overlayHeight, 0x000000, 0.85).setOrigin(0);
+  const overlayText = this.add.text(overlayWidth / 2, overlayHeight / 2, "GAME OVER", {
+    fontFamily: "Arial",
+    fontSize: "72px",
+    color: "#ffffff",
+    fontStyle: "bold",
+    align: "center",
+    stroke: "#000000",
+    strokeThickness: 8
+  }).setOrigin(0.5);
+
+  this.gameOverOverlay = this.add.container(0, 0, [overlayBackground, overlayText]);
+  this.gameOverOverlay.setScrollFactor(0);
+  this.gameOverOverlay.setDepth(10000);
+  this.gameOverOverlay.setAlpha(0);
+  this.gameOverOverlay.setVisible(false);
+  this.gameOverActive = false;
 
   // Coordinate display overlay
   this.coordElement = document.getElementById("coordinateDisplay");
@@ -216,6 +315,12 @@ function update() {
 
   let vx = 0;
   let vy = 0;
+
+  if (this.gameOverActive) {
+    lastHorizontal = null;
+    lastVertical = null;
+    this.player.setVelocity(0, 0);
+  }
 
   if (lastHorizontal === "left") vx = -speed;
   else if (lastHorizontal === "right") vx = speed;
@@ -288,6 +393,19 @@ function update() {
     const playerCenter = this.player.body ? this.player.body.center : this.player;
     this.coordElement.textContent = `${Math.round(playerCenter.x)}, ${Math.round(playerCenter.y)}`;
   }
+  // Update ability UI (DOM overlay)
+  const domFill = document.getElementById('ability-fill');
+  const domLabel = document.getElementById('ability-label');
+  if (domFill && domLabel) {
+    const ready = now >= this.abilityCooldownEnd;
+    const percent = ready ? 1 : Phaser.Math.Clamp((now - (this.abilityCooldownEnd - this.abilityCooldown)) / this.abilityCooldown, 0, 1);
+    // fill from bottom to top; 100% when ready, 0% just after use
+    domFill.style.transform = `scaleY(${percent})`;
+    // color: red when ready, grey when recharging
+    domFill.style.background = ready ? '#ff0000' : '#888888';
+    // label stays constant
+    domLabel.textContent = 'Attack';
+  }
   updateEnemies(this);
 
   const proximityRange = 50;
@@ -325,7 +443,20 @@ async function updateQuestsFile(quests) {
   } catch (error) {
     console.log("Could not save quests:", error);
   }
-  
+}
 
+async function updateEnemiesFile(enemies) {
+  try {
+    const payload = { enemies };
+    await fetch("assets/worldData/dungeon/enemies.json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.log("Could not save enemies:", error);
+  }
 }
 

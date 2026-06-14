@@ -11,7 +11,9 @@
             "idleSecondsMin": 3,
             "idleSecondsMax": 30,
             "detectionRadius": 3,
-            "chaseRadius": 7
+            "chaseRadius": 7,
+            "attackRadius": 2.5,
+            "removed": false
         },
         {
             "id": "strong-1",
@@ -24,7 +26,9 @@
             "idleSecondsMin": 3,
             "idleSecondsMax": 30,
             "detectionRadius": 4.5,
-            "chaseRadius": 10.5
+            "chaseRadius": 6,
+            "attackRadius": 3.5,
+            "removed": false
         },
         {
             "id": "basic-2",
@@ -37,7 +41,9 @@
             "idleSecondsMin": 3,
             "idleSecondsMax": 30,
             "detectionRadius": 3,
-            "chaseRadius": 7
+            "chaseRadius": 7,
+            "attackRadius": 2.5,
+            "removed": false
         }
     ]
 }

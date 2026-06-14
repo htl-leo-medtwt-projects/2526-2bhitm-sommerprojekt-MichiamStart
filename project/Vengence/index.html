@@ -87,6 +87,43 @@
             padding: 10px 20px;
             cursor: pointer;
         }
+
+        /* Ability UI overlay */
+        #ability-ui {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 150px;
+            height: 90px;
+            background: rgba(17,17,17,0.9);
+            border: 2px solid #ffffff;
+            z-index: 99999;
+            pointer-events: none;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #ability-fill {
+            position: absolute;
+            left: 4px;
+            bottom: 4px;
+            width: calc(100% - 8px);
+            height: 100%;
+            background: #00cc00;
+            transition: height 0.08s linear;
+            transform-origin: bottom;
+            z-index: 1;
+        }
+
+        #ability-label {
+            position: relative;
+            z-index: 2;
+            color: #ffffff;
+            font-weight: bold;
+            pointer-events: none;
+        }
         #b1 {
             width: 10em;
         }
@@ -215,6 +252,10 @@
         </div>
         <div class="screen" id="main">
             <h1>Start</h1>
+            <div id="ability-ui">
+                <div id="ability-fill"></div>
+                <div id="ability-label">Attack</div>
+            </div>
             <a href="main/game/game.html">game here start</a>
             <!--<button onclick="goTo('start')">Back</button> -->
         </div>

@@ -147,7 +147,73 @@ function findRandomTargetTile(grid, start, minTiles, maxTiles) {
 
 function onPlayerDeath(scene) {
   console.log("Player death triggered by enemy proximity.");
-  // Placeholder: reset player or game state here.
+  if (!scene) {
+    return;
+  }
+
+  if (scene.quests) {
+    scene.quests.forEach(quest => {
+      quest.completed = false;
+    });
+    updateQuestsFile(scene.quests);
+  }
+
+  if (scene.questMarkers) {
+    scene.questMarkers.clear(true, true);
+  } else {
+    scene.questMarkers = scene.add.group();
+  }
+
+  if (scene.quests) {
+    scene.quests.forEach(quest => {
+      if (!quest.completed) {
+        const marker = scene.add.circle(quest.x, quest.y, 15, 0xffff00);
+        marker.setStrokeStyle(2, 0xff0000);
+        marker.questId = quest.id;
+        marker.questName = quest.name;
+        scene.questMarkers.add(marker);
+      }
+    });
+  }
+
+  scene.activeQuest = null;
+
+  if (scene.player) {
+    const start = scene.playerStart || { x: 0, y: 0 };
+    scene.player.setPosition(start.x, start.y);
+    if (scene.player.body) {
+      scene.player.body.reset(start.x, start.y);
+      scene.player.body.setVelocity(0, 0);
+    }
+  }
+
+  if (scene.gameOverOverlay && !scene.gameOverActive) {
+    scene.gameOverActive = true;
+    scene.gameOverOverlay.setVisible(true);
+    scene.tweens.add({
+      targets: scene.gameOverOverlay,
+      alpha: { from: 0, to: 1 },
+      duration: 500,
+      ease: "Cubic.easeOut"
+    });
+
+    if (scene.player && scene.player.body) {
+      scene.player.body.stop();
+    }
+
+    scene.time.delayedCall(3000, () => {
+      scene.tweens.add({
+        targets: scene.gameOverOverlay,
+        alpha: 0,
+        duration: 500,
+        ease: "Cubic.easeIn",
+        onComplete: () => {
+          scene.gameOverOverlay.setVisible(false);
+          scene.gameOverActive = false;
+        }
+      });
+    });
+  }
 }
 
 function updateEnemies(scene) {
@@ -166,19 +232,23 @@ function updateEnemies(scene) {
     const enemyTile = worldToTile(circle.x, circle.y, tileWidth, tileHeight);
     enemy.debugDanger.setPosition(circle.x, circle.y);
     enemy.debugChase.setPosition(circle.x, circle.y);
+    enemy.debugAttack.setPosition(circle.x, circle.y);
 
     const distanceToPlayer = Phaser.Math.Distance.Between(circle.x, circle.y, player.x, player.y);
-    if (distanceToPlayer <= enemy.detectionRadiusPx) {
-      if (enemy.dangerStart === null) {
-        enemy.dangerStart = now;
-        enemy.hasTriggeredDeath = false;
-      } else if (!enemy.hasTriggeredDeath && now - enemy.dangerStart >= 2000) {
-        enemy.hasTriggeredDeath = true;
+    const inAttackRange = distanceToPlayer <= enemy.attackRadiusPx;
+    if (inAttackRange) {
+      enemy.debugAttack.setFillStyle(0xff6600, 0.18);
+      if (enemy.attackStart === null) {
+        enemy.attackStart = now;
+        enemy.attackDeathTriggered = false;
+      } else if (!enemy.attackDeathTriggered && now - enemy.attackStart >= 1000) {
+        enemy.attackDeathTriggered = true;
         onPlayerDeath(scene);
       }
     } else {
-      enemy.dangerStart = null;
-      enemy.hasTriggeredDeath = false;
+      enemy.attackStart = null;
+      enemy.attackDeathTriggered = false;
+      enemy.debugAttack.setFillStyle(0xffd300, 0.08);
     }
 
     const inChaseRange = distanceToPlayer <= enemy.chaseRadiusPx;
