@@ -56,6 +56,9 @@ function preload() {
   this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Death.png", { frameWidth: 256, frameHeight: 256 });
   this.load.spritesheet("idle-SW", "assets/sprites/player/Enemy-Melee-Idle-SW.png", { frameWidth: 256, frameHeight: 256 });
 
+  this.load.image("enemy-sprite", "assets/sprites/opponents/opponent.png");
+  this.load.image("quest-sprite", "assets/sprites/opponents/quest.png");
+
   this.load.image("DungeonTiles", "assets/worldData/dungeon/Dungeon_Tiles.png");
   this.load.image("DungeonTile", "assets/worldData/dungeon/Dungeon_Tile.png");
   this.load.tilemapTiledJSON("map", "assets/worldData/dungeon/dungeon.tmj");
@@ -180,8 +183,9 @@ function create() {
 
   this.quests.forEach(quest => {
     if (!quest.completed) {
-      const marker = this.add.circle(quest.x, quest.y, 15, 0xffff00);
-      marker.setStrokeStyle(2, 0xff0000);
+      const marker = this.add.image(quest.x, quest.y, "quest-sprite");
+      marker.setScale(0.1);
+      marker.setDepth(3);
       marker.questId = quest.id;
       marker.questName = quest.name;
       this.questMarkers.add(marker);
@@ -474,19 +478,18 @@ function update() {
   let nearestMarker = null;
   let nearestDistance = proximityRange;
 
-  //DEBUG
   this.questMarkers.getChildren().forEach(marker => {
     const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
     if (distance < proximityRange) {
-      marker.setStrokeStyle(3, 0x00ff00);
-      marker.setFillStyle(0xffff00);
+      marker.setTint(0x00ff88);
+      marker.setScale(0.12);
       if (distance < nearestDistance) {
         nearestDistance = distance;
         nearestMarker = marker;
       }
     } else {
-      marker.setStrokeStyle(2, 0xff0000);
-      marker.setFillStyle(0xffff00);
+      marker.clearTint();
+      marker.setScale(0.1);
     }
   });
 
@@ -529,15 +532,20 @@ function createEnemyFromConfig(scene, enemyConfig, index) {
   const chaseRadiusTiles = Number(enemyConfig.chaseRadius) || (type === "strong" ? 10.5 : 7);
   const attackRadiusTiles = Number(enemyConfig.attackRadius) || (type === "strong" ? 3.5 : 2.5);
   const placeholderRadius = Number(enemyConfig.placeholderRadius) || (type === "strong" ? 16 : 12);
-  const color = type === "strong" ? 0xcc0000 : 0xff4444;
 
-  const enemyCircle = scene.add.circle(spawnPosition.x, spawnPosition.y, placeholderRadius, color, 1);
-  scene.physics.add.existing(enemyCircle);
-  enemyCircle.body.setCircle(placeholderRadius);
+  const scale = type === "strong" ? 0.12 : 0.09;
+  const enemyCircle = scene.physics.add.image(spawnPosition.x, spawnPosition.y, "enemy-sprite");
+  enemyCircle.setScale(scale);
+  enemyCircle.setTint(type === "strong" ? 0xaa0000 : 0xff6666);
+  enemyCircle.body.setCircle(
+    placeholderRadius / scale,
+    enemyCircle.width / 2 - placeholderRadius / scale,
+    enemyCircle.height / 2 - placeholderRadius / scale
+  );
   enemyCircle.body.setBounce(0.2);
   enemyCircle.body.setDrag(1000);
   enemyCircle.body.setAllowGravity(false);
-  enemyCircle.setDepth(0.5);
+  enemyCircle.setDepth(1.5);
 
   const enemy = {
     id: enemyConfig.id || `enemy-${index + 1}`,
