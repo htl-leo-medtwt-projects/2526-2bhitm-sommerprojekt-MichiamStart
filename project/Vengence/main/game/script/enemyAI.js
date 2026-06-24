@@ -1,3 +1,6 @@
+
+//AI Code for Enemy Pathfinding
+
 function buildWalkableGrid(map, wallsLayer) {
   const grid = [];
   for (let y = 0; y < map.height; y++) {
