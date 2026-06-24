@@ -192,7 +192,6 @@ function create() {
     }
   });
 
-  // Track the game start time for finish timer
   this.gameStartTime = this.time.now;
   this.finishActive = false;
 
@@ -372,7 +371,6 @@ function update() {
   const speed = 80;
   const now = this.time.now;
 
-  // Fallback: Start game music if any key is pressed and music hasn't started yet
   if (typeof window.gameMusicStarted === 'function' && !window.gameMusicStarted()) {
     if (typeof window.startGameMusic === 'function') {
       window.startGameMusic();
@@ -459,17 +457,13 @@ function update() {
     const playerCenter = this.player.body ? this.player.body.center : this.player;
     this.coordElement.textContent = `${Math.round(playerCenter.x)}, ${Math.round(playerCenter.y)}`;
   }
-  // Update ability UI (DOM overlay)
   const domFill = document.getElementById('ability-fill');
   const domLabel = document.getElementById('ability-label');
   if (domFill && domLabel) {
     const ready = now >= this.abilityCooldownEnd;
     const percent = ready ? 1 : Phaser.Math.Clamp((now - (this.abilityCooldownEnd - this.abilityCooldown)) / this.abilityCooldown, 0, 1);
-    // fill from bottom to top; 100% when ready, 0% just after use
     domFill.style.transform = `scaleY(${percent})`;
-    // color: red when ready, grey when recharging
     domFill.style.background = ready ? '#ff0000' : '#888888';
-    // label stays constant
     domLabel.textContent = 'Attack';
   }
   updateEnemies(this);
@@ -495,12 +489,10 @@ function update() {
 
   this.activeQuest = nearestMarker ? nearestMarker.questId : null;
 
-  // Check finish condition: all quests completed
   if (!this.finishActive && this.quests && this.quests.length > 0) {
     const allDone = this.quests.every(q => q.completed === true);
     if (allDone) {
       this.finishActive = true;
-      // compute elapsed time
       const elapsedMs = now - (this.gameStartTime || now);
       const totalSeconds = Math.floor(elapsedMs / 1000);
       const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
